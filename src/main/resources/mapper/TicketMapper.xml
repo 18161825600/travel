@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.travel.mapper.TicketMapper">
+  <resultMap id="BaseResultMap" type="com.example.travel.pojo.Ticket">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="scenic_spot_id" jdbcType="BIGINT" property="scenicSpotId" />
+    <result column="ticket_name" jdbcType="VARCHAR" property="ticketName" />
+    <result column="ticket_describe" jdbcType="VARCHAR" property="ticketDescribe" />
+    <result column="adult_ticket_price" jdbcType="DOUBLE" property="adultTicketPrice" />
+    <result column="children_ticket_price" jdbcType="DOUBLE" property="childrenTicketPrice" />
+    <result column="adult_number" jdbcType="INTEGER" property="adultNumber" />
+    <result column="children_number" jdbcType="INTEGER" property="childrenNumber" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+</mapper>
