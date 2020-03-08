@@ -153,11 +153,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Integer investMoney(InvestMoney investMoney) {
-        User user = userDao.selectUserById(investMoney.getId());
+    public Double investMoney(InvestMoney investMoney) {
+        User user = userDao.selectUserById(investMoney.getUserId());
         user.setLastMoney(user.getLastMoney() + investMoney.getMoney());
         user.setUpdateTime(new Date());
-        return userDao.updateUser(user);
+        userDao.updateUser(user);
+        return user.getLastMoney();
     }
 
     @Override

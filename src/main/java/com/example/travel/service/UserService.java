@@ -33,7 +33,7 @@ public interface UserService {
 
     Integer updateUserPayPasswordByOld(UpdateUserPayPasswordRequest updateUserPayPasswordRequest);
 
-    Integer investMoney(InvestMoney investMoney);
+    Double investMoney(InvestMoney investMoney);
 
     Double selectUserLastMoney(IdRequest idRequest);
 

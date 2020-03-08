@@ -136,11 +136,8 @@ public class UserController {
     }
 
     @PutMapping(value = "invest/money")
-    public TravelJsonResult<String> investMoney(@RequestBody InvestMoney investMoney){
-        Integer integer = userService.investMoney(investMoney);
-        if(integer==1){
-            return TravelJsonResult.ok();
-        }else return TravelJsonResult.errorMsg("false");
+    public TravelJsonResult<Double> investMoney(@RequestBody InvestMoney investMoney){
+        return TravelJsonResult.ok(userService.investMoney(investMoney));
     }
 
     @PostMapping(value = "select/user/lastmoney")

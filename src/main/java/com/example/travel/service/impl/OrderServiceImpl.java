@@ -434,17 +434,20 @@ public class OrderServiceImpl implements OrderService {
 
     private SelectOrderResponse changeSelectOrderResponse(Order order){
         SelectOrderResponse shoppingCarResponse = new SelectOrderResponse();
+        Ticket ticket = ticketDao.selectTicketById(order.getTicketId());
         BeanUtils.copyProperties(order,shoppingCarResponse);
 
         if(order.getAdultNumber().equals(0)){
             shoppingCarResponse.setSpec("规格:学生");
             shoppingCarResponse.setNumber(order.getChildrenNumber());
+            shoppingCarResponse.setPrice(ticket.getChildrenTicketPrice());
         }else {
             shoppingCarResponse.setSpec("规格:成人");
             shoppingCarResponse.setNumber(order.getAdultNumber());
+            shoppingCarResponse.setPrice(ticket.getAdultTicketPrice());
         }
-
-        Ticket ticket = ticketDao.selectTicketById(order.getTicketId());
+        shoppingCarResponse.setChildrenTicketPrice(ticket.getChildrenTicketPrice());
+        shoppingCarResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
         shoppingCarResponse.setTicketName(ticket.getTicketName());
         shoppingCarResponse.setTicketDescribe(ticket.getTicketDescribe());
 

@@ -23,6 +23,12 @@ public class SelectOrderResponse implements Serializable {
 
     private Integer number;
 
+    private Double adultTicketPrice;
+
+    private Double childrenTicketPrice;
+
+    private Double price;
+
     private Double totalMoney;
 
     private final Boolean selected = Boolean.FALSE;
