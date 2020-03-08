@@ -2,11 +2,14 @@ package com.example.travel.request;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-public class AddScenicSpotRequest {
+public class AddScenicSpotRequest implements Serializable {
+
+    private static final long serialVersionUID = -5164377206875634457L;
 
     private String scenicSpotName;
 
@@ -15,6 +18,8 @@ public class AddScenicSpotRequest {
     private String scenicSpotDescribe;
 
     private String scenicSpotSynopsis;
+
+    private String scenicSpotTypes;
 
     private String img;
 

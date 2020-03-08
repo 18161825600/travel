@@ -2,11 +2,14 @@ package com.example.travel.request;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
-public class UpdateScenicRequest {
+public class UpdateScenicRequest implements Serializable {
+
+    private static final long serialVersionUID = -3899525992602786488L;
 
     private Long id;
 

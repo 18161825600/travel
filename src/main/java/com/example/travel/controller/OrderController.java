@@ -1,59 +1,113 @@
 package com.example.travel.controller;
 
 import com.example.travel.common.TravelJsonResult;
-import com.example.travel.request.AddOrderRequest;
-import com.example.travel.response.OrderResponse;
-import com.example.travel.response.SelectOrderResponse;
+import com.example.travel.request.*;
+import com.example.travel.response.*;
 import com.example.travel.service.OrderService;
 import com.github.pagehelper.PageInfo;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.PastOrPresent;
 import java.util.List;
 
 @RestController
 @CrossOrigin
+@Api
 public class OrderController {
 
     @Autowired
     private OrderService orderService;
 
-    @PostMapping(value = "insert/order")
-    public TravelJsonResult<String> insertOrder(@RequestBody AddOrderRequest addOrderRequest){
-        Integer integer = orderService.insertOrder(addOrderRequest);
-        if(integer==1){
-            return TravelJsonResult.ok("添加成功");
-        }else if(integer==2){
-            return TravelJsonResult.ok("余额不足，等待付款");
-        }else if(integer==-1) {
-            return TravelJsonResult.errorMsg("门票不能为空");
-        }else if(integer==-3){
-            return TravelJsonResult.errorMsg("用户不存在");
-        }else if(integer==-4){
-            return TravelJsonResult.errorMsg("门票不存在");
-        }else return TravelJsonResult.errorMsg("添加失败，请稍后重试");
-    }
+//    @PostMapping(value = "insert/order")
+//    @ApiOperation(value = "之前写的直接下订单")
+//    public TravelJsonResult<String> insertOrder(@RequestBody AddOrderRequest addOrderRequest){
+//        Integer integer = orderService.insertOrder(addOrderRequest);
+//        if(integer==1){
+//            return TravelJsonResult.ok();
+//        }else if(integer==2){
+//            return TravelJsonResult.errorMsg("false");
+//        }else if(integer==-1) {
+//            return TravelJsonResult.errorMsg("门票不能为空");
+//        }else if(integer==-3){
+//            return TravelJsonResult.errorMsg("用户不存在");
+//        }else if(integer==-4){
+//            return TravelJsonResult.errorMsg("门票不存在");
+//        }else return TravelJsonResult.errorMsg("添加失败，请稍后重试");
+//    }
 
+    @ApiOperation(value = "添加购物车")
     @PostMapping(value = "shopping/car")
-    public TravelJsonResult<String> insertShoppingCar(@RequestBody AddOrderRequest addOrderRequest){
-        Integer integer = orderService.insertShoppingCar(addOrderRequest);
-        if(integer==1){
-            return TravelJsonResult.ok("添加到购物车成功");
-        }else return TravelJsonResult.errorMsg("添加失败");
+    public TravelJsonResult<String> insertShoppingCar(@RequestBody AddShoppingCarRequest shoppingCarRequest){
+        Integer integer = orderService.insertShoppingCar(shoppingCarRequest);
+        if(!StringUtils.isEmpty(integer)){
+            return TravelJsonResult.ok(integer);
+        }else return TravelJsonResult.errorMsg("false");
     }
 
+    @ApiOperation(value = "通过余额直接支付")
+    @PostMapping(value = "add/order/by/lastMoney")
+    public TravelJsonResult<String> addOrderByLastMoney(@RequestBody AddShoppingCarRequest request){
+        Integer integer = orderService.addOrderByLastMoney(request);
+        if(integer==1){
+            return TravelJsonResult.ok();
+        }else return TravelJsonResult.errorMsg("false");
+    }
+
+    @ApiOperation(value = "通过其他方式直接支付")
+    @PostMapping(value = "add/order/by/other")
+    public TravelJsonResult<String> addOrderByOther(@RequestBody AddShoppingCarRequest request){
+        Integer integer = orderService.addOrderByOther(request);
+        if(integer==1){
+            return TravelJsonResult.ok();
+        }else return TravelJsonResult.errorMsg("false");
+    }
+
+    @ApiOperation(value = "用余额支付")
+    @PutMapping(value = "pay/orders")
+    public TravelJsonResult<String> payOrder(@RequestBody PayOrderRequest payOrderRequest){
+        Integer integer = orderService.payOrder(payOrderRequest);
+        if(integer==-1){
+            return TravelJsonResult.errorMsg("false");
+        }else return TravelJsonResult.ok();
+    }
+
+    @ApiOperation(value = "通过别的方式支付")
+    @PutMapping(value = "pay/order/by/other")
+    public TravelJsonResult<String> payOrderByOther(@RequestBody PayOrderByOtherRequest payOrderByOtherRequest){
+        Integer integer = orderService.payOrderByOther(payOrderByOtherRequest);
+        if(integer==0){
+            return TravelJsonResult.errorMsg("false");
+        }else return TravelJsonResult.ok();
+    }
+
+    @ApiOperation(value = "批量删除订单")
     @DeleteMapping(value = "delete/order")
-    public TravelJsonResult<String> deleteOrder(@RequestBody List<Long> ids){
-        return TravelJsonResult.ok("删除了"+orderService.deleteOrder(ids)+"条记录");
+    public TravelJsonResult<String> deleteOrder(@RequestBody IdsRequest idsRequest){
+        return TravelJsonResult.ok("删除了"+orderService.deleteOrder(idsRequest)+"条记录");
     }
 
+//    @ApiOperation(value = "昨天写的第二次修改购物车里面的信息")
+//    @PutMapping(value = "update/shopping/car")
+//    public TravelJsonResult<String> updateShoppingCar(@RequestBody AddShoppingCarRequest shoppingCarRequest){
+//        Integer integer = orderService.updateShoppingCar(shoppingCarRequest);
+//        if(integer==1){
+//            return TravelJsonResult.ok();
+//        }else return TravelJsonResult.errorMsg("false");
+//    }
+
+    @ApiOperation(value = "退单")
     @PutMapping(value = "chargeBack/order")
-    public TravelJsonResult<String> chargeBackOrder(Long id){
-        Integer integer = orderService.chargeBackOrder(id);
+    public TravelJsonResult<String> chargeBackOrder(@RequestBody IdRequest idRequest){
+        Integer integer = orderService.chargeBackOrder(idRequest);
         if(integer==1){
-            return TravelJsonResult.ok("退单成功");
+            return TravelJsonResult.ok();
         }else if(integer==-1){
-            return TravelJsonResult.errorMsg("订单不存在");
+            return TravelJsonResult.errorMsg("false");
         }else if(integer==-2){
             return TravelJsonResult.errorMsg("订单未付款，无法退款");
         }else if(integer==-3){
@@ -63,43 +117,68 @@ public class OrderController {
         }else return TravelJsonResult.errorMsg("退款失败请稍后重试");
     }
 
-    @GetMapping(value = "select/order/by/id")
-    public TravelJsonResult<OrderResponse> selectOrderById(Long id){
-        return TravelJsonResult.ok(orderService.selectOrderById(id));
+    @ApiOperation(value = "通过订单id查找订单")
+    @PostMapping(value = "select/order/by/id")
+    public TravelJsonResult<OrderResponse> selectOrderById(@RequestBody IdRequest idRequest){
+        return TravelJsonResult.ok(orderService.selectOrderById(idRequest));
     }
 
-    @GetMapping(value = "select/all/order")
-    public TravelJsonResult<PageInfo<OrderResponse>> selectAllOrder(@RequestParam(value = "pageNum",defaultValue = "1")Integer pageNum){
-        return TravelJsonResult.ok(orderService.selectAllOrder(pageNum));
+    @ApiOperation(value = "查数据库中所以的订单（管理员）")
+    @PostMapping(value = "select/all/order")
+    public TravelJsonResult<AllOrderResponse> selectAllOrder(@RequestBody PageNumRequest pageNumRequest){
+        return TravelJsonResult.ok(orderService.selectAllOrder(pageNumRequest));
     }
 
-    @GetMapping(value = "select/order/by/userId")
-    public TravelJsonResult<PageInfo<OrderResponse>> selectOrderByUserId(Long userId,@RequestParam(value = "pageNum",defaultValue = "1")Integer pageNum){
-        return TravelJsonResult.ok(orderService.selectOrderByUserId(userId, pageNum));
+    @ApiOperation(value = "通过用户id查找订单")
+    @PostMapping(value = "select/order/by/userId")
+    public TravelJsonResult<AllOrderResponse> selectOrderByUserId(@RequestBody SelectOrderByUserIdRequest selectOrderByUserIdRequest){
+        return TravelJsonResult.ok(orderService.selectOrderByUserId(selectOrderByUserIdRequest));
     }
 
-    @GetMapping(value = "select/order/by/ticketId")
-    public TravelJsonResult<PageInfo<OrderResponse>> selectOrderByTicketId(Long ticketId,@RequestParam(value = "pageNum",defaultValue = "1")Integer pageNum){
-        return TravelJsonResult.ok(orderService.selectOrderByTicketId(ticketId, pageNum));
+    @ApiOperation(value = "通过门票id查找订单")
+    @PostMapping(value = "select/order/by/ticketId")
+    public TravelJsonResult<AllOrderResponse> selectOrderByTicketId(@RequestBody SelectOrderByTicketIdRequest selectOrderByTicketIdRequest){
+        return TravelJsonResult.ok(orderService.selectOrderByTicketId(selectOrderByTicketIdRequest));
     }
 
-    @GetMapping(value = "select/shopping/car")
-    public TravelJsonResult<List<SelectOrderResponse>> selectShoppingCar(Long userId){
-        return TravelJsonResult.ok(orderService.selectShoppingCar(userId));
+    @ApiOperation(value = "查找用户购物车")
+    @PostMapping(value = "select/shopping/car")
+    public TravelJsonResult<AllSelectOrderResponse> selectShoppingCar(@RequestBody UserIdRequest userIdRequest){
+        AllSelectOrderResponse response = orderService.selectShoppingCar(userIdRequest);
+        if(response==null){
+            return TravelJsonResult.errorMsg("false");
+        }else return TravelJsonResult.ok(response);
     }
 
-    @GetMapping(value = "select/wait/payment")
-    public TravelJsonResult<List<SelectOrderResponse>> selectWaitPayment(Long userId){
-        return TravelJsonResult.ok(orderService.selectWaitPayment(userId));
+    @ApiOperation(value = "查找用户等待支付的订单")
+    @PostMapping(value = "select/wait/payment")
+    public TravelJsonResult<AllSelectOrderResponse> selectWaitPayment(@RequestBody UserIdRequest userIdRequest){
+        AllSelectOrderResponse response = orderService.selectWaitPayment(userIdRequest);
+        if(response==null){
+            return TravelJsonResult.errorMsg("false");
+        }else return TravelJsonResult.ok(response);
     }
 
-    @GetMapping(value = "select/charge/back")
-    public TravelJsonResult<List<SelectOrderResponse>> selectChargeBack(Long userId){
-        return TravelJsonResult.ok(orderService.selectChargeBack(userId));
+    @ApiOperation(value = "查找用户已退款的订单")
+    @PostMapping(value = "select/charge/back")
+    public TravelJsonResult<AllSelectOrderResponse> selectChargeBack(@RequestBody UserIdRequest userIdRequest){
+        AllSelectOrderResponse response = orderService.selectChargeBack(userIdRequest);
+        if(response==null){
+            return TravelJsonResult.errorMsg("false");
+        }else return TravelJsonResult.ok(response);
     }
 
-    @GetMapping(value = "select/success/order")
-    public TravelJsonResult<List<SelectOrderResponse>> selectSuccessOrder(Long userId){
-        return TravelJsonResult.ok(orderService.selectSuccessOrder(userId));
+    @ApiOperation(value = "查找用户支付成功的订单")
+    @PostMapping(value = "select/success/order")
+    public TravelJsonResult<AllSelectOrderResponse> selectSuccessOrder(@RequestBody UserIdRequest userIdRequest){
+        AllSelectOrderResponse response = orderService.selectSuccessOrder(userIdRequest);
+        if(response==null){
+            return TravelJsonResult.errorMsg("false");
+        }else return TravelJsonResult.ok(response);
+    }
+
+    @PostMapping("update/shopCar/number")
+    public TravelJsonResult<Integer> updateShopCarNum(@RequestBody UpdateShopCarNumRequest request){
+        return TravelJsonResult.ok(orderService.updateShopCarNum(request));
     }
 }

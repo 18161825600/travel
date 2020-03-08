@@ -2,12 +2,15 @@ package com.example.travel.request;
 
 import lombok.Data;
 
-@Data
-public class UpdateUserPasswordRequest {
+import java.io.Serializable;
 
-    private String userName;
+@Data
+public class UpdateUserPasswordRequest implements Serializable {
+
+    private static final long serialVersionUID = 1597191725065025191L;
+
+    private Long id;
 
     private String password;
 
-    private String copyPassword;
 }

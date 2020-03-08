@@ -1,32 +1,45 @@
 package com.example.travel.service.impl;
 
+import com.example.travel.bo.ScenicSpotCommentBo;
+import com.example.travel.bo.ScenicSpotImgsListBo;
+import com.example.travel.dao.CommentDao;
 import com.example.travel.dao.ScenicSpotDao;
 import com.example.travel.dao.TicketDao;
+import com.example.travel.dao.UserDao;
+import com.example.travel.pojo.Comment;
 import com.example.travel.pojo.ScenicSpot;
 import com.example.travel.pojo.Ticket;
-import com.example.travel.request.AddScenicSpotRequest;
-import com.example.travel.request.UpdateScenicRequest;
-import com.example.travel.response.ChannelDimensionResponse;
-import com.example.travel.response.ScenicByIdResponse;
-import com.example.travel.response.ScenicSpotResponse;
+import com.example.travel.pojo.User;
+import com.example.travel.request.*;
+import com.example.travel.response.*;
 import com.example.travel.service.ScenicSpotService;
 import com.example.travel.utils.JsonUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 
 import java.util.*;
-
+@Slf4j
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class ScenicSpotServiceImpl implements ScenicSpotService {
 
     @Autowired
     private ScenicSpotDao scenicSpotDao;
     @Autowired
     private TicketDao ticketDao;
+    @Autowired
+    private CommentDao commentDao;
+    @Autowired
+    private UserDao userDao;
 
     @Override
     public Integer insertScenicSpot(AddScenicSpotRequest addScenicSpotRequest) {
@@ -35,19 +48,20 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
         scenicSpot.setCreateTime(new Date());
         List<String> imgs = addScenicSpotRequest.getImgs();
         if(!CollectionUtils.isEmpty(imgs)){
-            HashMap<String,String> hashMap = new HashMap<>();
+            Map<String,Object> hashMap = new HashMap<>();
             for(String img :imgs){
                 String uuid = UUID.randomUUID().toString();
                 hashMap.put(uuid,img);
             }
-            scenicSpot.setImgs(JsonUtils.objectToJson(hashMap));
+            JSONObject json = new JSONObject(hashMap);
+            scenicSpot.setImgs(json.toString());
         }
         return scenicSpotDao.insertScenicSpot(scenicSpot);
     }
 
     @Override
-    public Integer deleteScenicSpot(Long id) {
-        return scenicSpotDao.deleteScenicSpot(id);
+    public Integer deleteScenicSpot(IdRequest idRequest) {
+        return scenicSpotDao.deleteScenicSpot(idRequest.getId());
     }
 
     @Override
@@ -68,75 +82,175 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
     }
 
     @Override
-    public ScenicByIdResponse selectScenicSpotById(Long id) {
+    public <T>T selectScenicSpotById(Long id) {
         ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(id);
-        ScenicByIdResponse scenicByIdResponse = new ScenicByIdResponse();
-        BeanUtils.copyProperties(scenicSpot,scenicByIdResponse);
-
-        Ticket ticket = ticketDao.selectTicketByScenicId(id);
-        scenicByIdResponse.setAdultNumber(ticket.getAdultNumber());
-        scenicByIdResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
-        scenicByIdResponse.setChildrenNumber(ticket.getChildrenNumber());
-        scenicByIdResponse.setChildrenTicketPrice(ticket.getChildrenTicketPrice());
-        scenicByIdResponse.setTicketName(ticket.getTicketName());
-        scenicByIdResponse.setTicketDescribe(ticket.getTicketDescribe());
-
-        return scenicByIdResponse;
+        return (T)changeScenicSpotResponse(scenicSpot);
     }
 
     @Override
-    public ChannelDimensionResponse selectChannelDimensionById(Long id) {
-        ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(id);
-        ChannelDimensionResponse channelDimensionResponse = new ChannelDimensionResponse();
-        channelDimensionResponse.setSLongitude(scenicSpot.getsLongitude());
-        channelDimensionResponse.setSDimension(scenicSpot.getsDimension());
-        return channelDimensionResponse;
-    }
-
-    @Override
-    public PageInfo<ScenicSpotResponse> selectAllScenicSpot(Integer pageNum) {
+    public List<ChannelDimensionResponse> selectChannelDimensionById() {
         List<ScenicSpot> scenicSpots = scenicSpotDao.selectAllScenicSpot();
-        PageHelper.startPage(pageNum,10);
-        List<ScenicSpotResponse> list = new ArrayList<>();
-        for(ScenicSpot scenicSpot : scenicSpots){
-            ScenicSpotResponse scenicSpotResponse = new ScenicSpotResponse();
-            BeanUtils.copyProperties(scenicSpot,scenicSpotResponse);
-            scenicSpotResponse.setTotal(scenicSpotDao.countAllScenicSpot());
-            list.add(scenicSpotResponse);
+        List<ChannelDimensionResponse> list = new ArrayList<>();
+        for (ScenicSpot scenicSpot : scenicSpots) {
+            ChannelDimensionResponse channelDimensionResponse = new ChannelDimensionResponse();
+            BeanUtils.copyProperties(scenicSpot,channelDimensionResponse);
+            list.add(channelDimensionResponse);
         }
-        PageInfo<ScenicSpotResponse> pageInfo = new PageInfo<>(list);
-        return pageInfo;
+        return list;
     }
 
     @Override
-    public PageInfo<ScenicSpotResponse> selectSomeByScenicSpotName(String scenicSpotName,Integer pageNum) {
-        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotName(scenicSpotName);
-        PageHelper.startPage(pageNum,10);
-        List<ScenicSpotResponse> list = new ArrayList<>();
-        for(ScenicSpot scenicSpot : scenicSpots){
-            ScenicSpotResponse scenicSpotResponse = new ScenicSpotResponse();
-            BeanUtils.copyProperties(scenicSpot,scenicSpotResponse);
-            scenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotName(scenicSpotName));
-            list.add(scenicSpotResponse);
-        }
-        PageInfo<ScenicSpotResponse> pageInfo = new PageInfo<>(list);
-        return pageInfo;
+    public <T>T selectOneLikeScenicSpotName(String scenicSpotName) {
+        ScenicSpot scenicSpot = scenicSpotDao.selectOneLikeScenicSpotName(scenicSpotName);
+        return changeScenicSpotResponse(scenicSpot);
     }
 
     @Override
-    public PageInfo<ScenicSpotResponse> selectSomeByScenicSpotAddress(String scenicSpotAddress, Integer pageNum) {
-        PageHelper.startPage(pageNum,10);
-        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress(scenicSpotAddress);
-        List<ScenicSpotResponse> list = new ArrayList<>();
-        for(ScenicSpot scenicSpot : scenicSpots){
-            ScenicSpotResponse scenicSpotResponse = new ScenicSpotResponse();
-            BeanUtils.copyProperties(scenicSpot,scenicSpotResponse);
-            scenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotAddress(scenicSpotAddress));
-            list.add(scenicSpotResponse);
-        }
-        PageInfo<ScenicSpotResponse> pageInfo = new PageInfo<>(list);
-        return pageInfo;
+    public AllScenicSpotResponse selectAllScenicSpot(PageNumRequest pageNumRequest) {
+        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
+        List<ScenicSpot> scenicSpots = scenicSpotDao.selectAllScenicSpot();
+        PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
+
+        List<ScenicSpot> scenicSpotList = pageInfo.getList();
+        AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
+        allScenicSpotResponse.setTotal(scenicSpotDao.countAllScenicSpot());
+        return allScenicSpotResponse;
     }
 
+    @Override
+    public AllScenicSpotResponse selectSomeByScenicSpotName(SelectScenicSpotNameRequest selectScenicSpotNameRequest) {
+        PageHelper.startPage(selectScenicSpotNameRequest.getPageNum(),10);
+        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotName(selectScenicSpotNameRequest.getScenicSpotName());
+        PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
 
+        List<ScenicSpot> scenicSpotList = pageInfo.getList();
+        AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
+        allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotName(selectScenicSpotNameRequest.getScenicSpotName()));
+
+        return allScenicSpotResponse;
+    }
+
+    @Override
+    public AllScenicSpotResponse selectSomeByScenicSpotAddress(SelectScenicSpotAddressRequest selectScenicSpotAddressRequest) {
+        PageHelper.startPage(selectScenicSpotAddressRequest.getPageNum(),10);
+        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress(selectScenicSpotAddressRequest.getScenicSpotAddress());
+        PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
+
+        List<ScenicSpot> scenicSpotList = pageInfo.getList();
+        AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
+        allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotAddress(selectScenicSpotAddressRequest.getScenicSpotAddress()));
+        return allScenicSpotResponse;
+    }
+
+    @Override
+    public AllScenicSpotResponse selectSomeByScenicSpotTypes(SelectScenicSpotTypesRequest selectScenicSpotTypesRequest) {
+        PageHelper.startPage(selectScenicSpotTypesRequest.getPageNum(),10);
+        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes(selectScenicSpotTypesRequest.getScenicSpotTypes());
+        PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
+
+        List<ScenicSpot> scenicSpotList = pageInfo.getList();
+        AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
+        allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotTypes(selectScenicSpotTypesRequest.getScenicSpotTypes()));
+
+        return allScenicSpotResponse;
+    }
+
+    private <T>T changeScenicSpotResponse(ScenicSpot scenicSpot){
+        Ticket ticket = ticketDao.selectTicketByScenicId(scenicSpot.getId());
+        if(ticket.getAdultTicketPrice()!=0.0 ) {
+            ScenicByIdResponse scenicByIdResponse = new ScenicByIdResponse();
+            scenicByIdResponse.setScenicSpotName(scenicSpot.getScenicSpotName());
+            scenicByIdResponse.setScenicSpotSynopsis(scenicSpot.getScenicSpotSynopsis());
+            scenicByIdResponse.setScenicSpotAddress(scenicSpot.getScenicSpotAddress());
+            scenicByIdResponse.setScenicSpotDescribe(scenicSpot.getScenicSpotDescribe());
+            scenicByIdResponse.setSLongitude(scenicSpot.getsLongitude());
+            scenicByIdResponse.setSDimension(scenicSpot.getsDimension());
+            scenicByIdResponse.setImg(scenicSpot.getImg());
+
+            List<ScenicSpotImgsListBo> scenicSpotImgsListBos = changeScenicSpotImgsListBo(scenicSpot);
+            scenicByIdResponse.setScenicSpotImgsListBos(scenicSpotImgsListBos);
+
+            scenicByIdResponse.setAdultNumber(ticket.getAdultNumber());
+            scenicByIdResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
+            scenicByIdResponse.setChildrenNumber(ticket.getChildrenNumber());
+            scenicByIdResponse.setChildrenTicketPrice(ticket.getChildrenTicketPrice());
+            scenicByIdResponse.setTicketName(ticket.getTicketName());
+            scenicByIdResponse.setTicketDescribe(ticket.getTicketDescribe());
+
+            List<Comment> comments = commentDao.selectCommentByScenicId(scenicSpot.getId());
+            scenicByIdResponse.setScenicSpotCommentBos(changeScenicSpotCommentBo(comments));
+
+            return (T)scenicByIdResponse;
+        }else {
+            FreeScenicByIdResponse freeScenicByIdResponse = new FreeScenicByIdResponse();
+            freeScenicByIdResponse.setScenicSpotName(scenicSpot.getScenicSpotName());
+            freeScenicByIdResponse.setScenicSpotAddress(scenicSpot.getScenicSpotAddress());
+            freeScenicByIdResponse.setScenicSpotDescribe(scenicSpot.getScenicSpotDescribe());
+            freeScenicByIdResponse.setScenicSpotSynopsis(scenicSpot.getScenicSpotSynopsis());
+            freeScenicByIdResponse.setImg(scenicSpot.getImg());
+
+            List<ScenicSpotImgsListBo> scenicSpotImgsListBos = changeScenicSpotImgsListBo(scenicSpot);
+            freeScenicByIdResponse.setScenicSpotImgsListBos(scenicSpotImgsListBos);
+
+            freeScenicByIdResponse.setSDimension(scenicSpot.getsDimension());
+            freeScenicByIdResponse.setSLongitude(scenicSpot.getsLongitude());
+
+            freeScenicByIdResponse.setTicketDescribe(ticket.getTicketDescribe());
+
+            List<Comment> comments = commentDao.selectCommentByScenicId(scenicSpot.getId());
+            freeScenicByIdResponse.setScenicSpotCommentBos(changeScenicSpotCommentBo(comments));
+
+            return (T)freeScenicByIdResponse;
+        }
+
+    }
+
+    private List<ScenicSpotCommentBo> changeScenicSpotCommentBo(List<Comment> comments){
+        List<ScenicSpotCommentBo> list = new ArrayList<>();
+        Integer number = 1;
+        for (Comment comment : comments) {
+            ScenicSpotCommentBo scenicSpotCommentBo = new ScenicSpotCommentBo();
+            scenicSpotCommentBo.setNumber(number);
+            scenicSpotCommentBo.setComment(comment.getComment());
+            scenicSpotCommentBo.setCreateTime(comment.getCreateTime());
+
+            User user = userDao.selectUserById(comment.getUserId());
+            scenicSpotCommentBo.setNickName(user.getNickName());
+            scenicSpotCommentBo.setImgUrl(user.getImgUrl());
+            list.add(scenicSpotCommentBo);
+            number = number+1;
+        }
+        return list;
+    }
+
+    private AllScenicSpotResponse changeAllScenicSpotResponse(List<ScenicSpot> scenicSpotList){
+        AllScenicSpotResponse allScenicSpotResponse = new AllScenicSpotResponse();
+        List<ScenicSpotResponse> list = new ArrayList<>();
+        for(ScenicSpot scenicSpot : scenicSpotList){
+            ScenicSpotResponse scenicSpotResponse = new ScenicSpotResponse();
+            BeanUtils.copyProperties(scenicSpot,scenicSpotResponse);
+            list.add(scenicSpotResponse);
+        }
+        allScenicSpotResponse.setScenicSpotResponses(list);
+        return allScenicSpotResponse;
+    }
+
+    private List<ScenicSpotImgsListBo> changeScenicSpotImgsListBo(ScenicSpot scenicSpot){
+        StringBuffer s = new StringBuffer();
+        s.append("["+scenicSpot.getImgs()+"]");
+
+        int temp = 1;
+        List<ScenicSpotImgsListBo> scenicSpotImgsListBos = new ArrayList<>();
+        List<Map<String,String>> mapList = JSONArray.parseObject(s.toString(),List. class );
+        for (Map<String,String> map : mapList){
+            for (Map.Entry entry : map.entrySet()){
+                ScenicSpotImgsListBo scenicSpotImgsListBo = new ScenicSpotImgsListBo();
+                scenicSpotImgsListBo.setImgId(temp);
+                scenicSpotImgsListBo.setImgUrl(entry.getValue().toString());
+                scenicSpotImgsListBos.add(scenicSpotImgsListBo);
+                temp = temp+1;
+            }
+        }
+        return scenicSpotImgsListBos;
+    }
 }

@@ -28,6 +28,13 @@ public class FavoriteDao {
         return favoriteMapper.selectByPrimaryKey(id);
     }
 
+    public Favorite selectFavoriteByUserIdAndScenicId(Long userId,Long scenicSpotId){
+        Example example = new Example(Favorite.class);
+        example.createCriteria().andEqualTo("userId",userId)
+                .andEqualTo("scenicSpotId",scenicSpotId);
+        return favoriteMapper.selectOneByExample(example);
+    }
+
     public List<Favorite> selectAllFavorite(){
         return favoriteMapper.selectAll();
     }

@@ -1,12 +1,18 @@
 package com.example.travel.response;
 
+import com.example.travel.bo.ScenicSpotCommentBo;
+import com.example.travel.bo.ScenicSpotImgsListBo;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 
 @Data
-public class ScenicByIdResponse {
+public class ScenicByIdResponse implements Serializable {
+
+    private static final long serialVersionUID = 8977815693938655870L;
 
     private String scenicSpotName;
 
@@ -18,7 +24,7 @@ public class ScenicByIdResponse {
 
     private String img;
 
-    private String imgs;
+    private List<ScenicSpotImgsListBo> scenicSpotImgsListBos;
 
     private BigDecimal sLongitude;
 
@@ -35,4 +41,6 @@ public class ScenicByIdResponse {
     private Integer adultNumber;
 
     private Integer childrenNumber;
+
+    private List<ScenicSpotCommentBo> scenicSpotCommentBos;
 }

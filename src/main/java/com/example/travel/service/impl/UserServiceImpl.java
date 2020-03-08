@@ -1,8 +1,11 @@
 package com.example.travel.service.impl;
 
-import com.example.travel.dao.UserDao;
+import com.example.travel.dao.*;
+import com.example.travel.pojo.Order;
+import com.example.travel.pojo.Ticket;
 import com.example.travel.pojo.User;
 import com.example.travel.request.*;
+import com.example.travel.response.ShoppingCarResponse;
 import com.example.travel.response.SignUserResponse;
 import com.example.travel.response.UserResponse;
 import com.example.travel.service.UserService;
@@ -11,36 +14,61 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Pattern;
 
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserDao userDao;
+    @Autowired
+    private FavoriteDao favoriteDao;
+    @Autowired
+    private CommentDao commentDao;
+    @Autowired
+    private OrderDao orderDao;
+    @Autowired
+    private TicketDao ticketDao;
 
     @Override
     public Integer registerUser(RegisterUserRequest registerUserRequest) {
         User user = new User();
         BeanUtils.copyProperties(registerUserRequest, user);
         user.setLastMoney(0.0);
+        user.setUserPrivilege((short)0);
         user.setCreateTime(new Date());
         return userDao.registerUser(user);
     }
 
     @Override
-    public User signIn(SignUserRequest signUserRequest) {
-        return userDao.signIn(signUserRequest.getUserName(), signUserRequest.getPassword());
+    public <T>T signIn(SignUserRequest signUserRequest) {
+        User user = userDao.signIn(signUserRequest.getUserName(), signUserRequest.getPassword());
+
+        if(user!=null) {
+            SignUserResponse signUserResponse = changeUserResponse(user);
+            return (T)signUserResponse;
+        }else return null;
     }
 
     @Override
-    public Integer deleteUser(Long id) {
-        return userDao.deleteUser(id);
+    public Long signInAdmin(SignUserRequest signUserRequest) {
+        User user = userDao.signIn(signUserRequest.getUserName(), signUserRequest.getPassword());
+        if(user!=null){
+            if(user.getUserPrivilege()==(short)1){
+                return user.getId();
+            }return -2L;//权限不足
+        }return -1L;//用户不存在
+    }
+
+    @Override
+    public Integer deleteUser(IdRequest idRequest) {
+        return userDao.deleteUser(idRequest.getId());
     }
 
     @Override
@@ -70,8 +98,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Integer updateUserNickName(UpdateUserNickName updateUserNickName) {
+        User user = userDao.selectUserById(updateUserNickName.getId());
+        user.setNickName(updateUserNickName.getNickName());
+        user.setUpdateTime(new Date());
+        return userDao.updateUser(user);
+    }
+
+    @Override
+    public Integer updateUserImgUrl(UpdateUserImgUrl updateUserImgUrl) {
+        User user = userDao.selectUserById(updateUserImgUrl.getId());
+        user.setImgUrl(updateUserImgUrl.getImgUrl());
+        user.setUpdateTime(new Date());
+        return userDao.updateUser(user);
+    }
+
+    @Override
     public Integer updateUserPassword(UpdateUserPasswordRequest updateUserPasswordRequest) {
-        User user = userDao.selectUserByUserName(updateUserPasswordRequest.getUserName());
+        User user = userDao.selectUserById(updateUserPasswordRequest.getId());
         if(updateUserPasswordRequest.getPassword().equals(user.getPassword())){
             return -1;//新密码不能和旧密码相同
         }else {
@@ -117,15 +161,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Double selectUserLastMoney(Long id) {
-        User user = userDao.selectUserById(id);
+    public Double selectUserLastMoney(IdRequest idRequest) {
+        User user = userDao.selectUserById(idRequest.getId());
         return user.getLastMoney();
     }
 
     @Override
-    public PageInfo<UserResponse> selectAllUser(Integer pageNum) {
+    public SignUserResponse selectUserById(IdRequest idRequest) {
+        User user = userDao.selectUserById(idRequest.getId());
+        SignUserResponse signUserResponse = changeUserResponse(user);
+        return signUserResponse;
+    }
+
+    @Override
+    public PageInfo<UserResponse> selectAllUser(PageNumRequest pageNumRequest) {
+        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
         List<User> users = userDao.selectAllUser();
-        PageHelper.startPage(pageNum,10);
         List<UserResponse> list = new ArrayList<>();
         for(User user : users){
             UserResponse userResponse = new UserResponse();
@@ -149,7 +200,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public PageInfo<UserResponse> selectUserByNickName(String nickName,Integer pageNum) {
         List<User> users = userDao.selectUserByNickName(nickName);
-        PageHelper.startPage(pageNum,10);
+        PageHelper.startPage(1,pageNum*10);
         List<UserResponse> list = new ArrayList<>();
         for(User user : users){
             UserResponse userResponse = new UserResponse();
@@ -160,4 +211,32 @@ public class UserServiceImpl implements UserService {
         PageInfo<UserResponse> pageInfo = new PageInfo<>(list);
         return pageInfo;
     }
+
+    public SignUserResponse changeUserResponse(User user) {
+        SignUserResponse signUserResponse = new SignUserResponse();
+        BeanUtils.copyProperties(user,signUserResponse);
+
+        signUserResponse.setFavoriteTotal(favoriteDao.countFavoriteByUserId(user.getId()));
+        signUserResponse.setCommentTotal(commentDao.countByUserId(user.getId()));
+
+        List<Order> orderList = orderDao.selectOrderByUserIdAndState(user.getId(), (short) 4);
+        List<ShoppingCarResponse> list = new ArrayList<>();
+        for (Order order : orderList) {
+            ShoppingCarResponse shoppingCarResponse = new ShoppingCarResponse();
+            BeanUtils.copyProperties(order, shoppingCarResponse);
+
+            shoppingCarResponse.setOrderId(order.getId());
+
+            Ticket ticket = ticketDao.selectTicketById(order.getTicketId());
+            shoppingCarResponse.setTicketName(ticket.getTicketName());
+            shoppingCarResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
+            shoppingCarResponse.setChildrenTicketPrice(ticket.getChildrenTicketPrice());
+
+            list.add(shoppingCarResponse);
+        }
+        signUserResponse.setShoppingCarResponseList(list);
+        signUserResponse.setShoppingCarTotal(orderDao.countOrderByUserIdAndState(user.getId(), (short) 4));
+        return signUserResponse;
+    }
+
 }

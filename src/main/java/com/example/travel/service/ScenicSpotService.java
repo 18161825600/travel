@@ -2,8 +2,8 @@ package com.example.travel.service;
 
 
 import com.example.travel.pojo.ScenicSpot;
-import com.example.travel.request.AddScenicSpotRequest;
-import com.example.travel.request.UpdateScenicRequest;
+import com.example.travel.request.*;
+import com.example.travel.response.AllScenicSpotResponse;
 import com.example.travel.response.ChannelDimensionResponse;
 import com.example.travel.response.ScenicByIdResponse;
 import com.example.travel.response.ScenicSpotResponse;
@@ -16,17 +16,21 @@ public interface ScenicSpotService {
 
     Integer insertScenicSpot(AddScenicSpotRequest addScenicSpotRequest);
 
-    Integer deleteScenicSpot(Long id);
+    Integer deleteScenicSpot(IdRequest idRequest);
 
     Integer updateScenicSpot(UpdateScenicRequest updateScenicRequest);
 
-    ScenicByIdResponse selectScenicSpotById(Long id);
+    <T>T selectScenicSpotById(Long id);
 
-    ChannelDimensionResponse selectChannelDimensionById(Long id);
+    List<ChannelDimensionResponse> selectChannelDimensionById();
 
-    PageInfo<ScenicSpotResponse> selectAllScenicSpot(Integer pageNum);
+    <T>T selectOneLikeScenicSpotName(String scenicSpotName);
 
-    PageInfo<ScenicSpotResponse> selectSomeByScenicSpotName(String scenicSpotName,Integer pageNum);
+    AllScenicSpotResponse selectAllScenicSpot(PageNumRequest pageNumRequest);
 
-    PageInfo<ScenicSpotResponse> selectSomeByScenicSpotAddress(String scenicSpotAddress,Integer pageNum);
+    AllScenicSpotResponse selectSomeByScenicSpotName(SelectScenicSpotNameRequest selectScenicSpotNameRequest);
+
+    AllScenicSpotResponse selectSomeByScenicSpotAddress(SelectScenicSpotAddressRequest selectScenicSpotAddressRequest);
+
+    AllScenicSpotResponse selectSomeByScenicSpotTypes(SelectScenicSpotTypesRequest selectScenicSpotTypesRequest);
 }

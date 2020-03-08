@@ -5,7 +5,10 @@ import com.example.travel.dao.TicketDao;
 import com.example.travel.pojo.ScenicSpot;
 import com.example.travel.pojo.Ticket;
 import com.example.travel.request.AddTicketRequest;
+import com.example.travel.request.IdRequest;
+import com.example.travel.request.PageNumRequest;
 import com.example.travel.request.UpdateTicketRequest;
+import com.example.travel.response.AllTicketResponse;
 import com.example.travel.response.TicketResponse;
 import com.example.travel.service.TicketService;
 import com.github.pagehelper.PageHelper;
@@ -13,12 +16,14 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class TicketServiceImpl implements TicketService {
 
     @Autowired
@@ -37,8 +42,8 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public Integer deleteTicket(Long id) {
-        return ticketDao.deleteTicket(id);
+    public Integer deleteTicket(IdRequest idRequest) {
+        return ticketDao.deleteTicket(idRequest.getId());
     }
 
     @Override
@@ -50,32 +55,35 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketResponse selectTicketById(Long id) {
-        Ticket ticket = ticketDao.selectTicketById(id);
+    public TicketResponse selectTicketById(IdRequest idRequest) {
+        Ticket ticket = ticketDao.selectTicketById(idRequest.getId());
         TicketResponse ticketResponse = changeTicketResponse(ticket);
-        ticketResponse.setTotal(1);
         return ticketResponse;
     }
 
 
     @Override
-    public PageInfo<TicketResponse> selectAllTicket(Integer pageNum) {
+    public AllTicketResponse selectAllTicket(PageNumRequest pageNumRequest) {
+        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
         List<Ticket> tickets = ticketDao.selectAllTicket();
-        PageHelper.startPage(pageNum,10);
+        PageInfo<Ticket> pageInfo = new PageInfo<>(tickets);
+
+        List<Ticket> ticketList = pageInfo.getList();
+        AllTicketResponse allTicketResponse = new AllTicketResponse();
         List<TicketResponse> list = new ArrayList<>();
-        for(Ticket ticket : tickets){
-            TicketResponse ticketResponse = changeTicketResponse(ticket);
-            ticketResponse.setTotal(ticketDao.countAllTicket());
+        for(Ticket ticket : ticketList){
+            TicketResponse ticketResponse = new TicketResponse();
+            BeanUtils.copyProperties(ticket,ticketResponse);
             list.add(ticketResponse);
         }
-        PageInfo<TicketResponse> pageInfo = new PageInfo<>(list);
-        return pageInfo;
+        allTicketResponse.setTicketResponses(list);
+        allTicketResponse.setTotal(ticketDao.countAllTicket());
+        return allTicketResponse;
     }
 
-    public TicketResponse changeTicketResponse(Ticket ticket){
+    private TicketResponse changeTicketResponse(Ticket ticket){
         TicketResponse ticketResponse = new TicketResponse();
         BeanUtils.copyProperties(ticket,ticketResponse);
-        ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(ticket.getScenicSpotId());
         return ticketResponse;
     }
 }

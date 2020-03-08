@@ -1,7 +1,10 @@
 package com.example.travel.service;
 
 import com.example.travel.request.AddTicketRequest;
+import com.example.travel.request.IdRequest;
+import com.example.travel.request.PageNumRequest;
 import com.example.travel.request.UpdateTicketRequest;
+import com.example.travel.response.AllTicketResponse;
 import com.example.travel.response.TicketResponse;
 import com.github.pagehelper.PageInfo;
 
@@ -10,12 +13,12 @@ public interface TicketService {
 
     Integer insertTicket(AddTicketRequest addTicketRequest);
 
-    Integer deleteTicket(Long id);
+    Integer deleteTicket(IdRequest idRequest);
 
     Integer updateTicket(UpdateTicketRequest updateTicketRequest);
 
-    TicketResponse selectTicketById(Long id);
+    TicketResponse selectTicketById(IdRequest idRequest);
 
-    PageInfo<TicketResponse> selectAllTicket(Integer pageNum);
+    AllTicketResponse selectAllTicket(PageNumRequest pageNumRequest);
 
 }

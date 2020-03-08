@@ -1,10 +1,8 @@
 package com.example.travel.service;
 
 
-import com.example.travel.request.AddFavoriteRequest;
-import com.example.travel.response.FavoriteResponse;
-import com.example.travel.response.FavoriteScenicResponse;
-import com.example.travel.response.FavoriteUserResponse;
+import com.example.travel.request.*;
+import com.example.travel.response.*;
 import com.github.pagehelper.PageInfo;
 
 import java.util.List;
@@ -13,13 +11,13 @@ public interface FavoriteService {
 
     Integer insertFavorite(AddFavoriteRequest addFavoriteRequest);
 
-    Integer deleteFavorite(List<Long> ids);
+    Integer deleteFavorite(IdsRequest idsRequest);
 
-    FavoriteResponse selectFavoriteById(Long id);
+    FavoriteResponse selectFavoriteById(IdRequest idRequest);
 
-    PageInfo<FavoriteResponse> selectAllFavorite(Integer pageNum);
+    AllFavoriteResponse selectAllFavorite(PageNumRequest pageNumRequest);
 
-    PageInfo<FavoriteUserResponse> selectFavoriteByUserId(Long userId, Integer pageNum);
+    AllFavoriteUserResponse selectFavoriteByUserId(SelectFavoriteByUserIdRequest selectFavoriteByUserIdRequest);
 
-    PageInfo<FavoriteScenicResponse> selectFavoriteByScenicId(Long scenicSpotId, Integer pageNum);
+    AllFavoriteScenicResponse selectFavoriteByScenicId(SelectFavoriteByScenicIdRequest selectFavoriteByScenicIdRequest);
 }

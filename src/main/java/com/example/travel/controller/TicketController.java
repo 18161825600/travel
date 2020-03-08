@@ -2,7 +2,10 @@ package com.example.travel.controller;
 
 import com.example.travel.common.TravelJsonResult;
 import com.example.travel.request.AddTicketRequest;
+import com.example.travel.request.IdRequest;
+import com.example.travel.request.PageNumRequest;
 import com.example.travel.request.UpdateTicketRequest;
+import com.example.travel.response.AllTicketResponse;
 import com.example.travel.response.TicketResponse;
 import com.example.travel.service.TicketService;
 import com.github.pagehelper.PageInfo;
@@ -20,34 +23,34 @@ public class TicketController {
     public TravelJsonResult<String> insertTicket(@RequestBody AddTicketRequest addTicketRequest){
         Integer integer = ticketService.insertTicket(addTicketRequest);
         if(integer==1){
-            return TravelJsonResult.ok("添加成功");
-        }else return TravelJsonResult.errorMsg("添加失败");
+            return TravelJsonResult.ok();
+        }else return TravelJsonResult.errorMsg("false");
     }
 
     @DeleteMapping(value = "delete/ticket")
-    public TravelJsonResult<String> deleteTicket( Long id){
-        Integer integer = ticketService.deleteTicket(id);
+    public TravelJsonResult<String> deleteTicket(@RequestBody IdRequest idRequest){
+        Integer integer = ticketService.deleteTicket(idRequest);
         if(integer==1){
-            return TravelJsonResult.ok("删除成功");
-        }else return TravelJsonResult.errorMsg("删除失败");
+            return TravelJsonResult.ok();
+        }else return TravelJsonResult.errorMsg("false");
     }
 
     @PutMapping(value = "update/ticket")
     public TravelJsonResult<String> updateTicket(@RequestBody UpdateTicketRequest updateTicketRequest){
         Integer integer = ticketService.updateTicket(updateTicketRequest);
         if(integer==1){
-            return TravelJsonResult.ok("修改成功");
-        }else return TravelJsonResult.errorMsg("修改失败");
+            return TravelJsonResult.ok();
+        }else return TravelJsonResult.errorMsg("false");
     }
 
-    @GetMapping(value = "select/ticket/by/id")
-    public TravelJsonResult<TicketResponse> selectTicketById(Long id){
-        return TravelJsonResult.ok(ticketService.selectTicketById(id));
+    @PostMapping(value = "select/ticket/by/id")
+    public TravelJsonResult<TicketResponse> selectTicketById(@RequestBody IdRequest idRequest){
+        return TravelJsonResult.ok(ticketService.selectTicketById(idRequest));
     }
 
-    @GetMapping(value = "select/all/ticket")
-    public TravelJsonResult<PageInfo<TicketResponse>> selectAllTicket(@RequestParam(value = "pageNum",defaultValue = "1")Integer pageNum){
-        return TravelJsonResult.ok(ticketService.selectAllTicket(pageNum));
+    @PostMapping(value = "select/all/ticket")
+    public TravelJsonResult<AllTicketResponse> selectAllTicket(@RequestBody PageNumRequest pageNumRequest){
+        return TravelJsonResult.ok(ticketService.selectAllTicket(pageNumRequest));
     }
 
 }

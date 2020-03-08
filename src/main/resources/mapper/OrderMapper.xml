@@ -15,4 +15,19 @@
     <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
     <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
   </resultMap>
+
+  <update id="payOrderByIds" parameterType="java.util.List">
+      <foreach collection="list" item="item" separator=";" open="" close="">
+          UPDATE t_order
+          <set>
+              <if test="item.orderState != null ">
+                  order_state=#{item.orderState,jdbcType=SMALLINT},
+              </if>
+              <if test="item.updateTime != null ">
+                  update_time=#{item.updateTime,jdbcType=TIMESTAMP}
+              </if>
+          </set>
+          WHERE id = #{item.id,jdbcType=BIGINT}
+      </foreach>
+  </update>
 </mapper>

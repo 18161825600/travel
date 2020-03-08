@@ -8,9 +8,8 @@ import com.example.travel.pojo.Order;
 import com.example.travel.pojo.ScenicSpot;
 import com.example.travel.pojo.Ticket;
 import com.example.travel.pojo.User;
-import com.example.travel.request.AddOrderRequest;
-import com.example.travel.response.OrderResponse;
-import com.example.travel.response.SelectOrderResponse;
+import com.example.travel.request.*;
+import com.example.travel.response.*;
 import com.example.travel.service.OrderService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -18,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,6 +26,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Transactional(rollbackFor = Exception.class )
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -80,6 +82,11 @@ public class OrderServiceImpl implements OrderService {
             user.setUpdateTime(new Date());
             userDao.updateUser(user);
 
+            User admin = userDao.selectUserById(1L);
+            admin.setLastMoney(admin.getLastMoney()+order.getTotalMoney());
+            admin.setUpdateTime(new Date());
+            userDao.updateUser(admin);
+
             order.setOrderState((short)1);
             order.setCreateTime(new Date());
             return orderDao.insertOrder(order);
@@ -87,25 +94,182 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Integer insertShoppingCar(AddOrderRequest addOrderRequest) {
-        Order order = new Order();
-        BeanUtils.copyProperties(addOrderRequest,order);
-        order.setOrderState((short)4);
-        order.setCreateTime(new Date());
+    public Integer insertShoppingCar(AddShoppingCarRequest shoppingCarRequest) {
+        Order oldOrder = orderDao.selectOrderByUserIdAndTicketIdAndState(shoppingCarRequest.getUserId(), shoppingCarRequest.getTicketId(), (short) 4);
+        Ticket ticket = ticketDao.selectTicketById(shoppingCarRequest.getTicketId());
 
-        Ticket ticket = ticketDao.selectTicketById(addOrderRequest.getTicketId());
-        order.setTotalMoney(addOrderRequest.getAdultNumber()*ticket.getAdultTicketPrice()+addOrderRequest.getChildrenNumber()*ticket.getChildrenTicketPrice());
+        if(oldOrder!=null && oldOrder.getAdultNumber()>0 && oldOrder.getChildrenNumber()==0) {
+            if(shoppingCarRequest.getSpec().equals("规格:成人")) {
+                Order order = orderDao.selectAdultOrdersByUserIdAndTicketIdAndState(shoppingCarRequest.getUserId(), shoppingCarRequest.getTicketId(), (short) 4);
+
+                order.setAdultNumber(order.getAdultNumber() + shoppingCarRequest.getNumber());
+                order.setTotalMoney(order.getTotalMoney() + shoppingCarRequest.getNumber() * ticket.getAdultTicketPrice());
+
+                ticket.setAdultNumber(ticket.getAdultNumber() - shoppingCarRequest.getNumber());
+
+                ticket.setUpdateTime(new Date());
+                ticketDao.updateTicket(ticket);
+
+                order.setUpdateTime(new Date());
+                return orderDao.updateOrder(order);
+            }else {
+                return addOrderToCar(shoppingCarRequest,ticket);
+            }
+        }else if(oldOrder!=null && oldOrder.getChildrenNumber()>0 && oldOrder.getAdultNumber()==0){
+            if(shoppingCarRequest.getSpec().equals("规格:学生")) {
+                Order order = orderDao.selectStudentOrdersByUserIdAndTicketIdAndState(shoppingCarRequest.getUserId(), shoppingCarRequest.getTicketId(), (short) 4);
+
+                order.setChildrenNumber(shoppingCarRequest.getNumber());
+                order.setTotalMoney(order.getTotalMoney() + shoppingCarRequest.getNumber() * ticket.getChildrenTicketPrice());
+
+                ticket.setChildrenNumber(ticket.getChildrenNumber() - shoppingCarRequest.getNumber());
+
+                ticket.setUpdateTime(new Date());
+                ticketDao.updateTicket(ticket);
+
+                order.setUpdateTime(new Date());
+                return orderDao.updateOrder(order);
+            }else {
+                return addOrderToCar(shoppingCarRequest,ticket);
+            }
+        } else {
+             return addOrderToCar(shoppingCarRequest, ticket);
+        }
+    }
+
+
+    @Override
+    public Integer addOrderByLastMoney(AddShoppingCarRequest request) {
+        User user = userDao.selectUserById(request.getUserId());
+        Order order = new Order();
+        Ticket ticket = ticketDao.selectTicketById(request.getTicketId());
+
+        if(request.getSpec().equals("规格:学生")){
+            order.setChildrenNumber(request.getNumber());
+            order.setAdultNumber(0);
+            order.setTotalMoney(ticket.getChildrenTicketPrice()*request.getNumber());
+
+            ticket.setChildrenNumber(ticket.getChildrenNumber()-request.getNumber());
+        }else {
+            order.setAdultNumber(request.getNumber());
+            order.setChildrenNumber(0);
+            order.setTotalMoney(ticket.getAdultTicketPrice()*request.getNumber());
+
+            ticket.setAdultNumber(ticket.getAdultNumber()-request.getNumber());
+        }
+        if(user.getLastMoney()>=order.getTotalMoney()){
+            User admin = userDao.selectUserById(1L);
+            admin.setLastMoney(admin.getLastMoney()+order.getTotalMoney());
+            admin.setUpdateTime(new Date());
+            userDao.updateUser(admin);
+
+            user.setLastMoney(user.getLastMoney()-order.getTotalMoney());
+            user.setUpdateTime(new Date());
+            userDao.updateUser(user);
+
+            ticket.setUpdateTime(new Date());
+            ticketDao.updateTicket(ticket);
+
+            order.setOrderState((short)1);
+            order.setUserId(request.getUserId());
+            order.setTicketId(request.getTicketId());
+            order.setCreateTime(new Date());
+            return orderDao.insertOrder(order);
+        }else return -1;
+    }
+
+    @Override
+    public Integer addOrderByOther(AddShoppingCarRequest request) {
+        User user = userDao.selectUserById(request.getUserId());
+        Order order = new Order();
+        Ticket ticket = ticketDao.selectTicketById(request.getTicketId());
+
+        if(request.getSpec().equals("规格:学生")){
+            order.setChildrenNumber(request.getNumber());
+            order.setAdultNumber(0);
+            order.setTotalMoney(ticket.getChildrenTicketPrice()*request.getNumber());
+
+            ticket.setChildrenNumber(ticket.getChildrenNumber()-request.getNumber());
+        }else {
+            order.setAdultNumber(request.getNumber());
+            order.setChildrenNumber(0);
+            order.setTotalMoney(ticket.getAdultTicketPrice()*request.getNumber());
+
+            ticket.setAdultNumber(ticket.getAdultNumber()-request.getNumber());
+        }
+        User admin = userDao.selectUserById(1L);
+        admin.setLastMoney(admin.getLastMoney()+order.getTotalMoney());
+        admin.setUpdateTime(new Date());
+        userDao.updateUser(admin);
+
+        ticket.setUpdateTime(new Date());
+        ticketDao.updateTicket(ticket);
+
+        order.setOrderState((short)1);
+        order.setUserId(request.getUserId());
+        order.setTicketId(request.getTicketId());
+        order.setCreateTime(new Date());
         return orderDao.insertOrder(order);
     }
 
     @Override
-    public Integer deleteOrder(List<Long> ids) {
-        return orderDao.deleteOrder(ids);
+    public Integer payOrder(PayOrderRequest payOrderRequest) {
+        User user = userDao.selectUserById(payOrderRequest.getUserId());
+
+        List<Long> ids = payOrderRequest.getIds();
+        List<Order> orders = new ArrayList<>();
+
+        if(user.getLastMoney()>=payOrderRequest.getTotalMoney()){
+            user.setLastMoney(user.getLastMoney()-payOrderRequest.getTotalMoney());
+            user.setUpdateTime(new Date());
+            userDao.updateUser(user);
+
+            User admin = userDao.selectUserById(1L);
+            admin.setLastMoney(admin.getLastMoney()+payOrderRequest.getTotalMoney());
+            admin.setUpdateTime(new Date());
+            userDao.updateUser(admin);
+
+            for (Long id : ids) {
+                Order order = orderDao.selectOrderById(id);
+                order.setOrderState((short)1);
+                order.setUpdateTime(new Date());
+                orders.add(order);
+            }
+            return orderDao.payOrder(orders);
+        }else {
+            for (Long id : ids) {
+                Order order = orderDao.selectOrderById(id);
+                order.setOrderState((short)0);
+                order.setUpdateTime(new Date());
+                orders.add(order);
+            }
+            orderDao.payOrder(orders);
+            return -1;
+        }
     }
 
     @Override
-    public Integer chargeBackOrder(Long id) {
-        Order order = orderDao.selectOrderById(id);
+    public Integer payOrderByOther(PayOrderByOtherRequest payOrderByOtherRequest) {
+        List<Long> ids = payOrderByOtherRequest.getIds();
+        List<Order> orders = new ArrayList<>();
+
+        for (Long id : ids) {
+            Order order = orderDao.selectOrderById(id);
+            order.setOrderState((short)1);
+            order.setUpdateTime(new Date());
+            orders.add(order);
+        }
+        return orderDao.payOrder(orders);
+    }
+
+    @Override
+    public Integer deleteOrder(IdsRequest idsRequest) {
+        return orderDao.deleteOrder(idsRequest.getIds());
+    }
+
+    @Override
+    public Integer chargeBackOrder(IdRequest idRequest) {
+        Order order = orderDao.selectOrderById(idRequest.getId());
         User user = userDao.selectUserById(order.getUserId());
         Ticket ticket = ticketDao.selectTicketById(order.getTicketId());
         if(order!=null){
@@ -115,6 +279,11 @@ public class OrderServiceImpl implements OrderService {
                 user.setLastMoney(user.getLastMoney()+order.getTotalMoney());
                 user.setUpdateTime(new Date());
                 userDao.updateUser(user);
+
+                User admin = userDao.selectUserById(1L);
+                admin.setLastMoney(admin.getLastMoney()-order.getTotalMoney());
+                admin.setUpdateTime(new Date());
+                userDao.updateUser(admin);
 
                 ticket.setChildrenNumber(ticket.getChildrenNumber()+order.getChildrenNumber());
                 ticket.setAdultNumber(ticket.getAdultNumber()+order.getAdultNumber());
@@ -130,106 +299,107 @@ public class OrderServiceImpl implements OrderService {
         }else return -1;//订单不存在
     }
 
+
+
     @Override
-    public OrderResponse selectOrderById(Long id) {
-        Order order = orderDao.selectOrderById(id);
+    public Integer updateShopCarNum(UpdateShopCarNumRequest request) {
+        Order order = orderDao.selectOrderById(request.getId());
+        Ticket ticket = ticketDao.selectTicketById(order.getTicketId());
+        if(order.getAdultNumber()>0){
+            order.setAdultNumber(request.getNumber());
+            order.setTotalMoney(ticket.getAdultTicketPrice()*request.getNumber());
+        }else {
+            order.setChildrenNumber(request.getNumber());
+            order.setTotalMoney(ticket.getChildrenTicketPrice()*request.getNumber());
+        }
+        order.setUpdateTime(new Date());
+        return orderDao.updateOrder(order);
+    }
+
+    @Override
+    public OrderResponse selectOrderById(IdRequest idRequest) {
+        Order order = orderDao.selectOrderById(idRequest.getId());
         OrderResponse orderResponse = changeOrderResponse(order);
-        orderResponse.setTotal(1);
         return orderResponse;
     }
 
     @Override
-    public PageInfo<OrderResponse> selectAllOrder(Integer pageNum) {
+    public AllOrderResponse selectAllOrder(PageNumRequest pageNumRequest) {
+        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
         List<Order> orders = orderDao.selectAllOrder();
-        PageHelper.startPage(pageNum,10);
-        List<OrderResponse> list = new ArrayList<>();
-        for(Order order : orders){
-            OrderResponse orderResponse = changeOrderResponse(order);
-            orderResponse.setTotal(orderDao.countAllOrder());
-            list.add(orderResponse);
-        }
-        PageInfo<OrderResponse> pageInfo = new PageInfo<>(list);
-        return pageInfo;
+        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+
+        List<Order> orderList = pageInfo.getList();
+        AllOrderResponse allOrderResponse = changeAllOrderResponse(orderList);
+        allOrderResponse.setTotal(orderDao.countAllOrder());
+        return allOrderResponse;
     }
 
     @Override
-    public PageInfo<OrderResponse> selectOrderByUserId(Long userId,Integer pageNum) {
-        List<Order> orders = orderDao.selectOrderByUserId(userId);
-        PageHelper.startPage(pageNum,10);
-        List<OrderResponse> list = new ArrayList<>();
-        for(Order order : orders){
-            OrderResponse orderResponse = changeOrderResponse(order);
-            orderResponse.setTotal(orderDao.countOrderByUserId(userId));
-            list.add(orderResponse);
-        }
-        PageInfo<OrderResponse> pageInfo = new PageInfo<>(list);
-        return pageInfo;
+    public AllOrderResponse selectOrderByUserId(SelectOrderByUserIdRequest selectOrderByUserIdRequest) {
+        PageHelper.startPage(selectOrderByUserIdRequest.getPageNum(),10);
+        List<Order> orders = orderDao.selectOrderByUserId(selectOrderByUserIdRequest.getUserId());
+        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+
+        List<Order> orderList = pageInfo.getList();
+        AllOrderResponse allOrderResponse = changeAllOrderResponse(orderList);
+        allOrderResponse.setTotal(orderDao.countOrderByUserId(selectOrderByUserIdRequest.getUserId()));
+        return allOrderResponse;
     }
 
     @Override
-    public PageInfo<OrderResponse> selectOrderByTicketId(Long ticketId,Integer pageNum) {
-        List<Order> orders = orderDao.selectOrderByTicketId(ticketId);
-        PageHelper.startPage(pageNum,10);
-        List<OrderResponse> list = new ArrayList<>();
-        for(Order order : orders){
-            OrderResponse orderResponse = changeOrderResponse(order);
-            orderResponse.setTotal(orderDao.countOrderByTicketId(ticketId));
-            list.add(orderResponse);
-        }
-        PageInfo<OrderResponse> pageInfo = new PageInfo<>(list);
-        return pageInfo;
+    public AllOrderResponse selectOrderByTicketId(SelectOrderByTicketIdRequest selectOrderByTicketIdRequest) {
+        PageHelper.startPage(selectOrderByTicketIdRequest.getPageNum(),10);
+        List<Order> orders = orderDao.selectOrderByTicketId(selectOrderByTicketIdRequest.getTicketId());
+        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+
+        List<Order> orderList = pageInfo.getList();
+        AllOrderResponse allOrderResponse = changeAllOrderResponse(orderList);
+        allOrderResponse.setTotal(orderDao.countOrderByTicketId(selectOrderByTicketIdRequest.getTicketId()));
+        return allOrderResponse;
     }
 
     @Override
-    public List<SelectOrderResponse> selectShoppingCar(Long userId) {
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userId, (short) 4);
-        List<SelectOrderResponse> list = new ArrayList<>();
-        for(Order order : orders){
-            SelectOrderResponse selectOrderResponse = changeSelectOrderResponse(order);
-
-            selectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userId,(short)4));
-            list.add(selectOrderResponse);
-        }
-        return list;
+    public AllSelectOrderResponse selectShoppingCar(UserIdRequest userIdRequest) {
+        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4);
+        if(!CollectionUtils.isEmpty(orders)) {
+            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
+            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4));
+            return allSelectOrderResponse;
+        }else return null;
     }
 
     @Override
-    public List<SelectOrderResponse> selectWaitPayment(Long userId) {
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userId, (short) 0);
-        List<SelectOrderResponse> list = new ArrayList<>();
-        for(Order order : orders){
-            SelectOrderResponse selectOrderResponse = changeSelectOrderResponse(order);
-            selectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userId,(short)0));
-            list.add(selectOrderResponse);
-        }
-        return list;
+    public AllSelectOrderResponse selectWaitPayment(UserIdRequest userIdRequest) {
+        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0);
+        if(!CollectionUtils.isEmpty(orders)) {
+            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
+            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0));
+            return allSelectOrderResponse;
+        }else return null;
     }
 
     @Override
-    public List<SelectOrderResponse> selectChargeBack(Long userId) {
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userId, (short) 2);
-        List<SelectOrderResponse> list = new ArrayList<>();
-        for(Order order : orders){
-            SelectOrderResponse selectOrderResponse = changeSelectOrderResponse(order);
-            selectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userId,(short)2));
-            list.add(selectOrderResponse);
-        }
-        return list;
+    public AllSelectOrderResponse selectChargeBack(UserIdRequest userIdRequest) {
+        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2);
+        if(!CollectionUtils.isEmpty(orders)) {
+            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
+            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2));
+            return allSelectOrderResponse;
+        }else return null;
     }
 
     @Override
-    public List<SelectOrderResponse> selectSuccessOrder(Long userId) {
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userId, (short) 1);
-        List<SelectOrderResponse> list = new ArrayList<>();
-        for(Order order : orders){
-            SelectOrderResponse selectOrderResponse = changeSelectOrderResponse(order);
-            selectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userId,(short)1));
-            list.add(selectOrderResponse);
-        }
-        return list;
+    public AllSelectOrderResponse selectSuccessOrder(UserIdRequest userIdRequest) {
+        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1);
+        if(!CollectionUtils.isEmpty(orders)) {
+            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
+            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1));
+            return allSelectOrderResponse;
+        }else return null;
     }
 
-    public OrderResponse changeOrderResponse(Order order){
+    private OrderResponse changeOrderResponse(Order order){
         User user = userDao.selectUserById(order.getUserId());
         Ticket ticket = ticketDao.selectTicketById(order.getTicketId());
         ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(ticket.getScenicSpotId());
@@ -262,9 +432,17 @@ public class OrderServiceImpl implements OrderService {
         return orderResponse;
     }
 
-    public SelectOrderResponse changeSelectOrderResponse(Order order){
+    private SelectOrderResponse changeSelectOrderResponse(Order order){
         SelectOrderResponse shoppingCarResponse = new SelectOrderResponse();
         BeanUtils.copyProperties(order,shoppingCarResponse);
+
+        if(order.getAdultNumber().equals(0)){
+            shoppingCarResponse.setSpec("规格:学生");
+            shoppingCarResponse.setNumber(order.getChildrenNumber());
+        }else {
+            shoppingCarResponse.setSpec("规格:成人");
+            shoppingCarResponse.setNumber(order.getAdultNumber());
+        }
 
         Ticket ticket = ticketDao.selectTicketById(order.getTicketId());
         shoppingCarResponse.setTicketName(ticket.getTicketName());
@@ -272,7 +450,58 @@ public class OrderServiceImpl implements OrderService {
 
         ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(ticket.getScenicSpotId());
         shoppingCarResponse.setImg(scenicSpot.getImg());
+        shoppingCarResponse.setScenicSpotId(scenicSpot.getId());
 
         return shoppingCarResponse;
     }
+
+    private AllOrderResponse changeAllOrderResponse(List<Order> orderList) {
+        AllOrderResponse allOrderResponse = new AllOrderResponse();
+        List<OrderResponse> list = new ArrayList<>();
+        for(Order order : orderList){
+            OrderResponse orderResponse = changeOrderResponse(order);
+            list.add(orderResponse);
+        }
+        allOrderResponse.setOrderResponseList(list);
+        return allOrderResponse;
+    }
+
+    private AllSelectOrderResponse changeAllSelectOrderResponse(List<Order> orders){
+        AllSelectOrderResponse allSelectOrderResponse = new AllSelectOrderResponse();
+        List<SelectOrderResponse> list = new ArrayList<>();
+        for(Order order : orders){
+            SelectOrderResponse selectOrderResponse = changeSelectOrderResponse(order);
+            list.add(selectOrderResponse);
+        }
+        allSelectOrderResponse.setSelectOrderResponseList(list);
+        return allSelectOrderResponse;
+    }
+
+    private Integer addOrderToCar(AddShoppingCarRequest shoppingCarRequest,Ticket ticket){
+        Order order = new Order();
+        order.setUserId(shoppingCarRequest.getUserId());
+        order.setTicketId(shoppingCarRequest.getTicketId());
+
+        if(shoppingCarRequest.getSpec().equals("规格:学生")){
+            order.setChildrenNumber(shoppingCarRequest.getNumber());
+            order.setAdultNumber(0);
+            order.setTotalMoney(ticket.getChildrenTicketPrice()*shoppingCarRequest.getNumber());
+
+            ticket.setChildrenNumber(ticket.getChildrenNumber()-shoppingCarRequest.getNumber());
+        }else {
+            order.setAdultNumber(shoppingCarRequest.getNumber());
+            order.setChildrenNumber(0);
+            order.setTotalMoney(ticket.getAdultTicketPrice()*shoppingCarRequest.getNumber());
+
+            ticket.setAdultNumber(ticket.getAdultNumber()-shoppingCarRequest.getNumber());
+
+        }
+        ticket.setUpdateTime(new Date());
+        ticketDao.updateTicket(ticket);
+
+        order.setOrderState((short)4);
+        order.setCreateTime(new Date());
+        return orderDao.insertOrder(order);
+    }
+
 }

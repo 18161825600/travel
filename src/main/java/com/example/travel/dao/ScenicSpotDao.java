@@ -36,6 +36,12 @@ public class ScenicSpotDao {
         return scenicSpotMapper.selectOneByExample(example);
     }
 
+    public ScenicSpot selectOneLikeScenicSpotName(String scenicSpotName){
+        Example example = new Example(ScenicSpot.class);
+        example.createCriteria().andLike("scenicSpotName","%"+scenicSpotName+"%");
+        return scenicSpotMapper.selectOneByExample(example);
+    }
+
     public List<ScenicSpot> selectAllScenicSpot(){
         return scenicSpotMapper.selectAll();
     }
@@ -49,6 +55,12 @@ public class ScenicSpotDao {
     public List<ScenicSpot> selectSomeByScenicSpotAddress(String scenicSpotAddress){
         Example example = new Example(ScenicSpot.class);
         example.createCriteria().andLike("scenicSpotAddress","%"+scenicSpotAddress+"%");
+        return scenicSpotMapper.selectByExample(example);
+    }
+
+    public List<ScenicSpot> selectSomeByScenicSpotTypes(String scenicSpotTypes){
+        Example example = new Example(ScenicSpot.class);
+        example.createCriteria().andEqualTo("scenicSpotTypes",scenicSpotTypes);
         return scenicSpotMapper.selectByExample(example);
     }
 
@@ -66,6 +78,12 @@ public class ScenicSpotDao {
     public Integer countByScenicSpotAddress(String scenicSpotAddress){
         Example example = new Example(ScenicSpot.class);
         example.createCriteria().andLike("scenicSpotAddress",scenicSpotAddress);
+        return scenicSpotMapper.selectCountByExample(example);
+    }
+
+    public Integer countByScenicSpotTypes(String scenicSpotTypes){
+        Example example = new Example(ScenicSpot.class);
+        example.createCriteria().andEqualTo("scenicSpotTypes",scenicSpotTypes);
         return scenicSpotMapper.selectCountByExample(example);
     }
 }

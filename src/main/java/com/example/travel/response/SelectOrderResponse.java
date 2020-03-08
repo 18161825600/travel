@@ -2,10 +2,16 @@ package com.example.travel.response;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class SelectOrderResponse {
+public class SelectOrderResponse implements Serializable {
+
+    private static final long serialVersionUID = 8901361686209087136L;
 
     private Long id;
+
+    private Long scenicSpotId;
 
     private String img;
 
@@ -13,11 +19,12 @@ public class SelectOrderResponse {
 
     private String ticketDescribe;
 
-    private Integer adultNumber;
+    private String spec;
 
-    private Integer childrenNumber;
+    private Integer number;
 
     private Double totalMoney;
 
-    private Integer total;
+    private final Boolean selected = Boolean.FALSE;
+
 }

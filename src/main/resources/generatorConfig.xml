@@ -71,7 +71,7 @@
             <!--<property name="rootInterface" value="com.weimob.elasticjob.dao.core.CommonMapper"/>-->
         </javaClientGenerator>
 
-        <table tableName="t_scenic_spot" domainObjectName="ScenicSpot">
+        <table tableName="t_user" domainObjectName="User">
             <generatedKey column="id" sqlStatement="MySql" identity="true"/>
         </table>
 

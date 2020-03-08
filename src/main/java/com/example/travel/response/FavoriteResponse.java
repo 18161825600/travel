@@ -2,10 +2,13 @@ package com.example.travel.response;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
-public class FavoriteResponse {
+public class FavoriteResponse implements Serializable {
+
+    private static final long serialVersionUID = 8713566392627070990L;
 
     private Long id;
 
@@ -21,5 +24,4 @@ public class FavoriteResponse {
 
     private Date createTime;
 
-    private Integer total;
 }

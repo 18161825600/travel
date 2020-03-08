@@ -2,9 +2,13 @@ package com.example.travel.response;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 
 @Data
-public class TicketResponse {
+public class TicketResponse implements Serializable {
+
+    private static final long serialVersionUID = 7030788358523363284L;
 
     private String ticketName;
 
@@ -14,5 +18,4 @@ public class TicketResponse {
 
     private Double childrenTicketPrice;
 
-    private Integer total;
 }

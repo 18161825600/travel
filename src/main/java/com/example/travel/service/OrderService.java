@@ -1,8 +1,7 @@
 package com.example.travel.service;
 
-import com.example.travel.request.AddOrderRequest;
-import com.example.travel.response.OrderResponse;
-import com.example.travel.response.SelectOrderResponse;
+import com.example.travel.request.*;
+import com.example.travel.response.*;
 import com.github.pagehelper.PageInfo;
 
 import java.util.List;
@@ -11,25 +10,36 @@ public interface OrderService {
 
     Integer insertOrder(AddOrderRequest addOrderRequest);
 
-    Integer insertShoppingCar(AddOrderRequest addOrderRequest);
+    Integer insertShoppingCar(AddShoppingCarRequest shoppingCarRequest);
 
-    Integer deleteOrder(List<Long> ids);
+    Integer addOrderByLastMoney(AddShoppingCarRequest request);
 
-    Integer chargeBackOrder(Long id);
+    Integer addOrderByOther(AddShoppingCarRequest request);
 
-    OrderResponse selectOrderById(Long id);
+    Integer payOrder(PayOrderRequest payOrderRequest);
 
-    PageInfo<OrderResponse> selectAllOrder(Integer pageNum);
+    Integer payOrderByOther(PayOrderByOtherRequest payOrderByOtherRequest);
 
-    PageInfo<OrderResponse> selectOrderByUserId(Long userId,Integer pageNum);
+    Integer deleteOrder(IdsRequest idsRequest);
 
-    PageInfo<OrderResponse> selectOrderByTicketId(Long ticketId,Integer pageNum);
+    Integer chargeBackOrder(IdRequest idRequest);
 
-    List<SelectOrderResponse> selectShoppingCar(Long userId);
 
-    List<SelectOrderResponse> selectWaitPayment(Long userId);
+    Integer updateShopCarNum(UpdateShopCarNumRequest request);
 
-    List<SelectOrderResponse> selectChargeBack(Long userId);
+    OrderResponse selectOrderById(IdRequest idRequest);
 
-    List<SelectOrderResponse> selectSuccessOrder(Long userId);
+    AllOrderResponse selectAllOrder(PageNumRequest pageNumRequest);
+
+    AllOrderResponse selectOrderByUserId(SelectOrderByUserIdRequest selectOrderByUserIdRequest);
+
+    AllOrderResponse selectOrderByTicketId(SelectOrderByTicketIdRequest selectOrderByTicketIdRequest);
+
+    AllSelectOrderResponse selectShoppingCar(UserIdRequest userIdRequest);
+
+    AllSelectOrderResponse selectWaitPayment(UserIdRequest userIdRequest);
+
+    AllSelectOrderResponse selectChargeBack(UserIdRequest userIdRequest);
+
+    AllSelectOrderResponse selectSuccessOrder(UserIdRequest userIdRequest);
 }
