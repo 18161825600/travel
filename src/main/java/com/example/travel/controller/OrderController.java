@@ -49,22 +49,28 @@ public class OrderController {
         }else return TravelJsonResult.errorMsg("false");
     }
 
-    @ApiOperation(value = "通过余额直接支付")
-    @PostMapping(value = "add/order/by/lastMoney")
-    public TravelJsonResult<String> addOrderByLastMoney(@RequestBody AddShoppingCarRequest request){
-        Integer integer = orderService.addOrderByLastMoney(request);
-        if(integer==1){
-            return TravelJsonResult.ok();
-        }else return TravelJsonResult.errorMsg("false");
-    }
+//    @ApiOperation(value = "通过余额直接支付")
+//    @PostMapping(value = "add/order/by/lastMoney")
+//    public TravelJsonResult<String> addOrderByLastMoney(@RequestBody AddShoppingCarRequest request){
+//        Integer integer = orderService.addOrderByLastMoney(request);
+//        if(integer==1){
+//            return TravelJsonResult.ok();
+//        }else return TravelJsonResult.errorMsg("false");
+//    }
+//
+//    @ApiOperation(value = "通过其他方式直接支付")
+//    @PostMapping(value = "add/order/by/other")
+//    public TravelJsonResult<String> addOrderByOther(@RequestBody AddShoppingCarRequest request){
+//        Integer integer = orderService.addOrderByOther(request);
+//        if(integer==1){
+//            return TravelJsonResult.ok();
+//        }else return TravelJsonResult.errorMsg("false");
+//    }
 
-    @ApiOperation(value = "通过其他方式直接支付")
-    @PostMapping(value = "add/order/by/other")
-    public TravelJsonResult<String> addOrderByOther(@RequestBody AddShoppingCarRequest request){
-        Integer integer = orderService.addOrderByOther(request);
-        if(integer==1){
-            return TravelJsonResult.ok();
-        }else return TravelJsonResult.errorMsg("false");
+    @ApiOperation(value = "从直接支付添加进等待支付")
+    @PutMapping(value = "add/payment/order")
+    public TravelJsonResult<Integer> addPaymentOrder(@RequestBody AddShoppingCarRequest request){
+        return TravelJsonResult.ok(orderService.addPaymentOrder(request));
     }
 
     @ApiOperation(value = "用余额支付")
@@ -181,4 +187,6 @@ public class OrderController {
     public TravelJsonResult<Integer> updateShopCarNum(@RequestBody UpdateShopCarNumRequest request){
         return TravelJsonResult.ok(orderService.updateShopCarNum(request));
     }
+
+
 }

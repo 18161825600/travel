@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -137,26 +138,22 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    public Integer addPaymentOrder(AddShoppingCarRequest request) {
+        Order order = checkChileOrAdult(request);
+        order.setUserId(request.getUserId());
+        order.setTicketId(request.getTicketId());
+        order.setOrderState((short)0);
+        order.setCreateTime(new Date());
+        return orderDao.insertOrder(order);
+    }
+
 
     @Override
     public Integer addOrderByLastMoney(AddShoppingCarRequest request) {
         User user = userDao.selectUserById(request.getUserId());
-        Order order = new Order();
-        Ticket ticket = ticketDao.selectTicketById(request.getTicketId());
+        Order order = checkChileOrAdult(request);
 
-        if(request.getSpec().equals("规格:学生")){
-            order.setChildrenNumber(request.getNumber());
-            order.setAdultNumber(0);
-            order.setTotalMoney(ticket.getChildrenTicketPrice()*request.getNumber());
-
-            ticket.setChildrenNumber(ticket.getChildrenNumber()-request.getNumber());
-        }else {
-            order.setAdultNumber(request.getNumber());
-            order.setChildrenNumber(0);
-            order.setTotalMoney(ticket.getAdultTicketPrice()*request.getNumber());
-
-            ticket.setAdultNumber(ticket.getAdultNumber()-request.getNumber());
-        }
         if(user.getLastMoney()>=order.getTotalMoney()){
             User admin = userDao.selectUserById(1L);
             admin.setLastMoney(admin.getLastMoney()+order.getTotalMoney());
@@ -166,9 +163,6 @@ public class OrderServiceImpl implements OrderService {
             user.setLastMoney(user.getLastMoney()-order.getTotalMoney());
             user.setUpdateTime(new Date());
             userDao.updateUser(user);
-
-            ticket.setUpdateTime(new Date());
-            ticketDao.updateTicket(ticket);
 
             order.setOrderState((short)1);
             order.setUserId(request.getUserId());
@@ -181,29 +175,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Integer addOrderByOther(AddShoppingCarRequest request) {
         User user = userDao.selectUserById(request.getUserId());
-        Order order = new Order();
-        Ticket ticket = ticketDao.selectTicketById(request.getTicketId());
+        Order order = checkChileOrAdult(request);
 
-        if(request.getSpec().equals("规格:学生")){
-            order.setChildrenNumber(request.getNumber());
-            order.setAdultNumber(0);
-            order.setTotalMoney(ticket.getChildrenTicketPrice()*request.getNumber());
-
-            ticket.setChildrenNumber(ticket.getChildrenNumber()-request.getNumber());
-        }else {
-            order.setAdultNumber(request.getNumber());
-            order.setChildrenNumber(0);
-            order.setTotalMoney(ticket.getAdultTicketPrice()*request.getNumber());
-
-            ticket.setAdultNumber(ticket.getAdultNumber()-request.getNumber());
-        }
         User admin = userDao.selectUserById(1L);
         admin.setLastMoney(admin.getLastMoney()+order.getTotalMoney());
         admin.setUpdateTime(new Date());
         userDao.updateUser(admin);
-
-        ticket.setUpdateTime(new Date());
-        ticketDao.updateTicket(ticket);
 
         order.setOrderState((short)1);
         order.setUserId(request.getUserId());
@@ -481,24 +458,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private Integer addOrderToCar(AddShoppingCarRequest shoppingCarRequest,Ticket ticket){
-        Order order = new Order();
+        Order order = checkChileOrAdult(shoppingCarRequest);
         order.setUserId(shoppingCarRequest.getUserId());
         order.setTicketId(shoppingCarRequest.getTicketId());
 
-        if(shoppingCarRequest.getSpec().equals("规格:学生")){
-            order.setChildrenNumber(shoppingCarRequest.getNumber());
-            order.setAdultNumber(0);
-            order.setTotalMoney(ticket.getChildrenTicketPrice()*shoppingCarRequest.getNumber());
-
-            ticket.setChildrenNumber(ticket.getChildrenNumber()-shoppingCarRequest.getNumber());
-        }else {
-            order.setAdultNumber(shoppingCarRequest.getNumber());
-            order.setChildrenNumber(0);
-            order.setTotalMoney(ticket.getAdultTicketPrice()*shoppingCarRequest.getNumber());
-
-            ticket.setAdultNumber(ticket.getAdultNumber()-shoppingCarRequest.getNumber());
-
-        }
         ticket.setUpdateTime(new Date());
         ticketDao.updateTicket(ticket);
 
@@ -507,4 +470,25 @@ public class OrderServiceImpl implements OrderService {
         return orderDao.insertOrder(order);
     }
 
+    private Order checkChileOrAdult(AddShoppingCarRequest request){
+        Order order = new Order();
+        Ticket ticket = ticketDao.selectTicketById(request.getTicketId());
+        if(request.getSpec().equals("规格:学生")){
+            order.setChildrenNumber(request.getNumber());
+            order.setAdultNumber(0);
+            order.setTotalMoney(ticket.getChildrenTicketPrice()*request.getNumber());
+
+            ticket.setChildrenNumber(ticket.getChildrenNumber()-request.getNumber());
+        }else {
+            order.setAdultNumber(request.getNumber());
+            order.setChildrenNumber(0);
+            order.setTotalMoney(ticket.getAdultTicketPrice()*request.getNumber());
+
+            ticket.setAdultNumber(ticket.getAdultNumber()-request.getNumber());
+        }
+        ticket.setUpdateTime(new Date());
+        ticketDao.updateTicket(ticket);
+
+        return order;
+    }
 }

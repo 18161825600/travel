@@ -12,6 +12,8 @@ public interface OrderService {
 
     Integer insertShoppingCar(AddShoppingCarRequest shoppingCarRequest);
 
+    Integer addPaymentOrder(AddShoppingCarRequest request);
+
     Integer addOrderByLastMoney(AddShoppingCarRequest request);
 
     Integer addOrderByOther(AddShoppingCarRequest request);
@@ -23,7 +25,6 @@ public interface OrderService {
     Integer deleteOrder(IdsRequest idsRequest);
 
     Integer chargeBackOrder(IdRequest idRequest);
-
 
     Integer updateShopCarNum(UpdateShopCarNumRequest request);
 
