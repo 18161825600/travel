@@ -12,7 +12,7 @@ public interface OrderService {
 
     Integer insertShoppingCar(AddShoppingCarRequest shoppingCarRequest);
 
-    Integer addPaymentOrder(AddShoppingCarRequest request);
+    Integer addPaymentOrder(AddPaymentOrderRequest request);
 
     Integer addOrderByLastMoney(AddShoppingCarRequest request);
 

@@ -20,6 +20,10 @@ public class OrderDao {
         return orderMapper.insert(order);
     }
 
+    public Integer addSomeOrder(List<Order> orders){
+        return orderMapper.insertList(orders);
+    }
+
     public Integer deleteOrder(List<Long> ids){
         Example example = new Example(Order.class);
         example.createCriteria().andIn("id",ids);
@@ -52,6 +56,14 @@ public class OrderDao {
                 .andEqualTo("ticketId",ticketId)
                 .andEqualTo("orderState",orderState);
         return orderMapper.selectOneByExample(example);
+    }
+
+    public List<Order> selectOrdersByUserIdAndTicketIdAndState(Long userId,Long ticketId,Short orderState) {
+        Example example = new Example(Order.class);
+        example.createCriteria().andEqualTo("userId", userId)
+                .andEqualTo("ticketId", ticketId)
+                .andEqualTo("orderState", orderState);
+        return orderMapper.selectByExample(example);
     }
 
     public Order selectAdultOrdersByUserIdAndTicketIdAndState(Long userId,Long ticketId,Short orderState){

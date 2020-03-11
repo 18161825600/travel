@@ -43,10 +43,12 @@ public class OrderController {
     @ApiOperation(value = "添加购物车")
     @PostMapping(value = "shopping/car")
     public TravelJsonResult<String> insertShoppingCar(@RequestBody AddShoppingCarRequest shoppingCarRequest){
-        Integer integer = orderService.insertShoppingCar(shoppingCarRequest);
-        if(!StringUtils.isEmpty(integer)){
+        try {
+            Integer integer = orderService.insertShoppingCar(shoppingCarRequest);
             return TravelJsonResult.ok(integer);
-        }else return TravelJsonResult.errorMsg("false");
+        }catch (Exception e){
+            return TravelJsonResult.errorMsg("你已添加该订单");
+        }
     }
 
 //    @ApiOperation(value = "通过余额直接支付")
@@ -68,8 +70,8 @@ public class OrderController {
 //    }
 
     @ApiOperation(value = "从直接支付添加进等待支付")
-    @PutMapping(value = "add/payment/order")
-    public TravelJsonResult<Integer> addPaymentOrder(@RequestBody AddShoppingCarRequest request){
+    @PostMapping(value = "add/payment/order")
+    public TravelJsonResult<Integer> addPaymentOrder(@RequestBody AddPaymentOrderRequest request){
         return TravelJsonResult.ok(orderService.addPaymentOrder(request));
     }
 

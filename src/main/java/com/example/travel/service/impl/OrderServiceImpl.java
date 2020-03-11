@@ -139,15 +139,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Integer addPaymentOrder(AddShoppingCarRequest request) {
-        Order order = checkChileOrAdult(request);
-        order.setUserId(request.getUserId());
-        order.setTicketId(request.getTicketId());
-        order.setOrderState((short)0);
-        order.setCreateTime(new Date());
-        return orderDao.insertOrder(order);
+    public Integer addPaymentOrder(AddPaymentOrderRequest request) {
+        List<AddShoppingCarRequest> requestList = request.getRequestList();
+        List<Order> list = new ArrayList<>();
+        for (AddShoppingCarRequest addShoppingCarRequest : requestList) {
+            Order order = checkChileOrAdult(addShoppingCarRequest);
+            order.setUserId(addShoppingCarRequest.getUserId());
+            order.setTicketId(addShoppingCarRequest.getTicketId());
+            order.setOrderState((short)0);
+            order.setCreateTime(new Date());
+            list.add(order);
+        }
+        return orderDao.addSomeOrder(list);
     }
-
 
     @Override
     public Integer addOrderByLastMoney(AddShoppingCarRequest request) {
@@ -275,8 +279,6 @@ public class OrderServiceImpl implements OrderService {
             }else return -4;//门票过期无法退款
         }else return -1;//订单不存在
     }
-
-
 
     @Override
     public Integer updateShopCarNum(UpdateShopCarNumRequest request) {
