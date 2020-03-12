@@ -88,16 +88,24 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
     }
 
     @Override
-    public List<ChannelDimensionResponse> selectChannelDimensionById() {
-        List<ScenicSpot> scenicSpots = scenicSpotDao.selectAllScenicSpot();
-        List<ChannelDimensionResponse> list = new ArrayList<>();
-        for (ScenicSpot scenicSpot : scenicSpots) {
-            ChannelDimensionResponse channelDimensionResponse = new ChannelDimensionResponse();
-            BeanUtils.copyProperties(scenicSpot,channelDimensionResponse);
-            list.add(channelDimensionResponse);
-        }
-        return list;
+    public ChannelDimensionResponse getChannelDimensionById(IdRequest idRequest) {
+        ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(idRequest.getId());
+        ChannelDimensionResponse response = new ChannelDimensionResponse();
+        BeanUtils.copyProperties(scenicSpot,response);
+        return response;
     }
+
+//    @Override
+//    public List<ChannelDimensionResponse> selectChannelDimensionById() {
+//        List<ScenicSpot> scenicSpots = scenicSpotDao.selectAllScenicSpot();
+//        List<ChannelDimensionResponse> list = new ArrayList<>();
+//        for (ScenicSpot scenicSpot : scenicSpots) {
+//            ChannelDimensionResponse channelDimensionResponse = new ChannelDimensionResponse();
+//            BeanUtils.copyProperties(scenicSpot,channelDimensionResponse);
+//            list.add(channelDimensionResponse);
+//        }
+//        return list;
+//    }
 
     @Override
     public <T>T selectOneLikeScenicSpotName(String scenicSpotName) {

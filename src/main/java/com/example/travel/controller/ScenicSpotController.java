@@ -51,10 +51,15 @@ public class ScenicSpotController {
         return (T)TravelJsonResult.ok(scenicSpotService.selectScenicSpotById(id));
     }
 
-    @GetMapping(value = "select/channel/dimension")
-    public TravelJsonResult<List<ChannelDimensionResponse>> selectChannelDimensionById(){
-        return TravelJsonResult.ok(scenicSpotService.selectChannelDimensionById());
+    @PostMapping("get/channel/dimension/by/id")
+    public TravelJsonResult<ChannelDimensionResponse> getChannelDimensionById(@RequestBody IdRequest idRequest){
+        return TravelJsonResult.ok(scenicSpotService.getChannelDimensionById(idRequest));
     }
+
+//    @GetMapping(value = "select/channel/dimension")
+//    public TravelJsonResult<List<ChannelDimensionResponse>> selectChannelDimensionById(){
+//        return TravelJsonResult.ok(scenicSpotService.selectChannelDimensionById());
+//    }
 
     @GetMapping(value = "select/one/like/scenicSpotName")
     public <T>T selectOneLikeScenicSpotName(String scenicSpotName){

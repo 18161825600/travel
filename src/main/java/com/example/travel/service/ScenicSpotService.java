@@ -22,7 +22,9 @@ public interface ScenicSpotService {
 
     <T>T selectScenicSpotById(Long id);
 
-    List<ChannelDimensionResponse> selectChannelDimensionById();
+    ChannelDimensionResponse getChannelDimensionById(IdRequest idRequest);
+
+//    List<ChannelDimensionResponse> selectChannelDimensionById();
 
     <T>T selectOneLikeScenicSpotName(String scenicSpotName);
 
