@@ -11,16 +11,20 @@ import com.example.travel.response.*;
 import com.example.travel.service.CommentService;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 @Service
+@Slf4j
 @Transactional(rollbackFor = Exception.class)
 public class CommentServiceImpl implements CommentService {
 
@@ -88,7 +92,7 @@ public class CommentServiceImpl implements CommentService {
         List<CommentUserResponse> list = new ArrayList<>();
         for(Comment comment : commentList){
             CommentUserResponse commentUserResponse = new CommentUserResponse();
-            commentUserResponse.setCreateTime(comment.getCreateTime());
+            commentUserResponse.setCreateTime(changeDate(comment.getCreateTime()));
             commentUserResponse.setComment(comment.getComment());
 
             ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(comment.getScenicSpotId());
@@ -115,7 +119,7 @@ public class CommentServiceImpl implements CommentService {
             CommentScenicResponse commentScenicResponse = new CommentScenicResponse();
             commentScenicResponse.setNumber(number);
             commentScenicResponse.setComment(comment.getComment());
-            commentScenicResponse.setCreateTime(comment.getCreateTime());
+            commentScenicResponse.setCreateTime(changeDate(comment.getCreateTime()));
 
             User user = userDao.selectUserById(comment.getUserId());
             commentScenicResponse.setNickName(user.getNickName());
@@ -131,7 +135,8 @@ public class CommentServiceImpl implements CommentService {
 
     private CommentResponse changeCommentResponse(Comment comment){
         CommentResponse commentResponse = new CommentResponse();
-        BeanUtils.copyProperties(comment,commentResponse);
+        commentResponse.setComment(comment.getComment());
+        commentResponse.setCreateTime(changeDate(comment.getCreateTime()));
 
         User user = userDao.selectUserById(comment.getUserId());
         commentResponse.setNickName(user.getNickName());
@@ -139,5 +144,12 @@ public class CommentServiceImpl implements CommentService {
         ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(comment.getScenicSpotId());
         commentResponse.setScenicSpotName(scenicSpot.getScenicSpotName());
         return commentResponse;
+    }
+
+    public String changeDate(Date date){
+        log.info("date-{}",date);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        log.info("dateFormat-{}",dateFormat.format(date));
+        return dateFormat.format(date);
     }
 }

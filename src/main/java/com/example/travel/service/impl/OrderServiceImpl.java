@@ -139,7 +139,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Integer addPaymentOrder(AddPaymentOrderRequest request) {
+    public AddPaymentOrderResponse addPaymentOrder(AddPaymentOrderRequest request) {
+        AddPaymentOrderResponse response = new AddPaymentOrderResponse();
+        List<Long> ids = new ArrayList<>();
         List<AddShoppingCarRequest> requestList = request.getRequestList();
         List<Order> list = new ArrayList<>();
         for (AddShoppingCarRequest addShoppingCarRequest : requestList) {
@@ -148,9 +150,12 @@ public class OrderServiceImpl implements OrderService {
             order.setTicketId(addShoppingCarRequest.getTicketId());
             order.setOrderState((short)0);
             order.setCreateTime(new Date());
+            ids.add(order.getId());
             list.add(order);
         }
-        return orderDao.addSomeOrder(list);
+        orderDao.addSomeOrder(list);
+        response.setIds(ids);
+        return response;
     }
 
     @Override
@@ -191,6 +196,23 @@ public class OrderServiceImpl implements OrderService {
         order.setTicketId(request.getTicketId());
         order.setCreateTime(new Date());
         return orderDao.insertOrder(order);
+    }
+
+    @Override
+    public CallWhatResponse callWhat(CallWhatRequest request) {
+        CallWhatResponse response = new CallWhatResponse();
+        Order order = orderDao.selectOrderById(request.getData());
+        order.setOrderState((short)1);
+        order.setUpdateTime(new Date());
+        orderDao.updateOrder(order);
+
+        User user = userDao.selectUserById(request.getUserId());
+        user.setLastMoney(user.getLastMoney()-order.getTotalMoney());
+        user.setUpdateTime(new Date());
+        userDao.updateUser(user);
+
+        response.setMsg("支付成功");
+        return response;
     }
 
     @Override

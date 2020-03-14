@@ -18,6 +18,6 @@ public class CommentScenicResponse implements Serializable {
 
     private String comment;
 
-    private Date createTime;
+    private String createTime;
 
 }

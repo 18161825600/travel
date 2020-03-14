@@ -51,6 +51,12 @@ public class OrderController {
         }
     }
 
+    @ApiOperation(value = "2020-03-12 13:59修改的")
+    @PostMapping(value = "call/what")
+    public TravelJsonResult<CallWhatResponse> callWhat(@RequestBody CallWhatRequest request){
+        return TravelJsonResult.ok(orderService.callWhat(request));
+    }
+
 //    @ApiOperation(value = "通过余额直接支付")
 //    @PostMapping(value = "add/order/by/lastMoney")
 //    public TravelJsonResult<String> addOrderByLastMoney(@RequestBody AddShoppingCarRequest request){
@@ -71,7 +77,7 @@ public class OrderController {
 
     @ApiOperation(value = "从直接支付添加进等待支付")
     @PostMapping(value = "add/payment/order")
-    public TravelJsonResult<Integer> addPaymentOrder(@RequestBody AddPaymentOrderRequest request){
+    public TravelJsonResult<AddPaymentOrderResponse> addPaymentOrder(@RequestBody AddPaymentOrderRequest request){
         return TravelJsonResult.ok(orderService.addPaymentOrder(request));
     }
 
