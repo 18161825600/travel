@@ -141,24 +141,46 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
     @Override
     public AllScenicSpotResponse selectSomeByScenicSpotAddress(SelectScenicSpotAddressRequest selectScenicSpotAddressRequest) {
         PageHelper.startPage(selectScenicSpotAddressRequest.getPageNum(),10);
-        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress(selectScenicSpotAddressRequest.getScenicSpotAddress());
+        ScenicSpot scenicSpot = new ScenicSpot();
+        if(selectScenicSpotAddressRequest.getScenicSpotAddress()==0){
+            scenicSpot.setScenicSpotAddress("临潼区");
+        }else if(selectScenicSpotAddressRequest.getScenicSpotAddress()==1){
+            scenicSpot.setScenicSpotAddress("碑林区");
+        }else if(selectScenicSpotAddressRequest.getScenicSpotAddress()==2){
+            scenicSpot.setScenicSpotAddress("雁塔区");
+        }else if(selectScenicSpotAddressRequest.getScenicSpotAddress()==3){
+            scenicSpot.setScenicSpotAddress("灞桥区");
+        }else{
+            scenicSpot.setScenicSpotAddress("新城区");
+        }
+        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress(scenicSpot.getScenicSpotAddress());
         PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
 
         List<ScenicSpot> scenicSpotList = pageInfo.getList();
         AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
-        allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotAddress(selectScenicSpotAddressRequest.getScenicSpotAddress()));
+        allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotAddress(scenicSpot.getScenicSpotAddress()));
         return allScenicSpotResponse;
     }
 
     @Override
     public AllScenicSpotResponse selectSomeByScenicSpotTypes(SelectScenicSpotTypesRequest selectScenicSpotTypesRequest) {
         PageHelper.startPage(selectScenicSpotTypesRequest.getPageNum(),10);
-        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes(selectScenicSpotTypesRequest.getScenicSpotTypes());
+        ScenicSpot scenicSpot = new ScenicSpot();
+        if(selectScenicSpotTypesRequest.getScenicSpotTypes()==0){
+            scenicSpot.setScenicSpotTypes("人文");
+        }else if(selectScenicSpotTypesRequest.getScenicSpotTypes()==1){
+            scenicSpot.setScenicSpotTypes("休闲");
+        }else if(selectScenicSpotTypesRequest.getScenicSpotTypes()==2){
+            scenicSpot.setScenicSpotTypes("自然");
+        }else {
+            scenicSpot.setScenicSpotTypes("其他");
+        }
+        List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes(scenicSpot.getScenicSpotTypes());
         PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
 
         List<ScenicSpot> scenicSpotList = pageInfo.getList();
         AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
-        allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotTypes(selectScenicSpotTypesRequest.getScenicSpotTypes()));
+        allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotTypes(scenicSpot.getScenicSpotTypes()));
 
         return allScenicSpotResponse;
     }
