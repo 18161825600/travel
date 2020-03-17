@@ -150,7 +150,7 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
             scenicSpot.setScenicSpotAddress("雁塔区");
         }else if(selectScenicSpotAddressRequest.getScenicSpotAddress()==3){
             scenicSpot.setScenicSpotAddress("灞桥区");
-        }else{
+        }else if(selectScenicSpotAddressRequest.getScenicSpotAddress()==4){
             scenicSpot.setScenicSpotAddress("新城区");
         }
         List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress(scenicSpot.getScenicSpotAddress());
@@ -166,13 +166,13 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
     public AllScenicSpotResponse selectSomeByScenicSpotTypes(SelectScenicSpotTypesRequest selectScenicSpotTypesRequest) {
         PageHelper.startPage(selectScenicSpotTypesRequest.getPageNum(),10);
         ScenicSpot scenicSpot = new ScenicSpot();
-        if(selectScenicSpotTypesRequest.getScenicSpotTypes()==0){
+        if(selectScenicSpotTypesRequest.getScenicSpotTypes()==1){
             scenicSpot.setScenicSpotTypes("人文");
-        }else if(selectScenicSpotTypesRequest.getScenicSpotTypes()==1){
-            scenicSpot.setScenicSpotTypes("休闲");
         }else if(selectScenicSpotTypesRequest.getScenicSpotTypes()==2){
+            scenicSpot.setScenicSpotTypes("休闲");
+        }else if(selectScenicSpotTypesRequest.getScenicSpotTypes()==3){
             scenicSpot.setScenicSpotTypes("自然");
-        }else {
+        }else if(selectScenicSpotTypesRequest.getScenicSpotTypes()==4){
             scenicSpot.setScenicSpotTypes("其他");
         }
         List<ScenicSpot> scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes(scenicSpot.getScenicSpotTypes());
@@ -182,6 +182,18 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
         AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
         allScenicSpotResponse.setTotal(scenicSpotDao.countByScenicSpotTypes(scenicSpot.getScenicSpotTypes()));
 
+        return allScenicSpotResponse;
+    }
+
+    @Override
+    public AllScenicSpotResponse threeInOne(ThreeInOneRequest request) {
+        PageHelper.startPage(request.getPageNum(),10);
+        List<ScenicSpot> scenicSpots = chooseScenicSpot(request.getChoose());
+        PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
+
+        List<ScenicSpot> scenicSpotList = pageInfo.getList();
+        AllScenicSpotResponse allScenicSpotResponse = changeAllScenicSpotResponse(scenicSpotList);
+        allScenicSpotResponse.setTotal(chooseScenicSpotTotal(request.getChoose()));
         return allScenicSpotResponse;
     }
 
@@ -282,5 +294,57 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
             }
         }
         return scenicSpotImgsListBos;
+    }
+
+    private List<ScenicSpot> chooseScenicSpot(Integer choose){
+        List<ScenicSpot> scenicSpots = new ArrayList<>();
+        if(choose==1){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress("临潼区");
+        }else if(choose==2){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress("碑林区");
+        }else if(choose==3){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress("雁塔区");
+        }else if(choose==4){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress("灞桥区");
+        }else if(choose==5){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotAddress("新城区");
+        }else if(choose==6){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes("人文");
+        }else if(choose==7){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes("休闲");
+        }else if(choose==8){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes("自然");
+        }else if(choose==9){
+            scenicSpots = scenicSpotDao.selectSomeByScenicSpotTypes("其他");
+        }else {
+            scenicSpots=scenicSpotDao.selectAllScenicSpot();
+        }
+        return scenicSpots;
+    }
+
+    private Integer chooseScenicSpotTotal(Integer choose){
+        Integer total;
+        if(choose==1){
+            total = scenicSpotDao.countByScenicSpotAddress("临潼区");
+        }else if(choose==2){
+            total = scenicSpotDao.countByScenicSpotAddress("碑林区");
+        }else if(choose==3){
+            total = scenicSpotDao.countByScenicSpotAddress("雁塔区");
+        }else if(choose==4){
+            total = scenicSpotDao.countByScenicSpotAddress("灞桥区");
+        }else if(choose==5){
+            total = scenicSpotDao.countByScenicSpotAddress("新城区");
+        }else if(choose==6){
+            total = scenicSpotDao.countByScenicSpotTypes("人文");
+        }else if(choose==7){
+            total = scenicSpotDao.countByScenicSpotTypes("休闲");
+        }else if(choose==8){
+            total = scenicSpotDao.countByScenicSpotTypes("自然");
+        }else if(choose==9){
+            total = scenicSpotDao.countByScenicSpotTypes("其他");
+        }else {
+            total=scenicSpotDao.countAllScenicSpot();
+        }
+        return total;
     }
 }

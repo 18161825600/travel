@@ -77,7 +77,7 @@ public class ScenicSpotDao {
 
     public Integer countByScenicSpotAddress(String scenicSpotAddress){
         Example example = new Example(ScenicSpot.class);
-        example.createCriteria().andLike("scenicSpotAddress",scenicSpotAddress);
+        example.createCriteria().andLike("scenicSpotAddress","%"+scenicSpotAddress+"%");
         return scenicSpotMapper.selectCountByExample(example);
     }
 

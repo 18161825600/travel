@@ -35,4 +35,7 @@ public interface ScenicSpotService {
     AllScenicSpotResponse selectSomeByScenicSpotAddress(SelectScenicSpotAddressRequest selectScenicSpotAddressRequest);
 
     AllScenicSpotResponse selectSomeByScenicSpotTypes(SelectScenicSpotTypesRequest selectScenicSpotTypesRequest);
+
+    AllScenicSpotResponse threeInOne(ThreeInOneRequest request);
+
 }

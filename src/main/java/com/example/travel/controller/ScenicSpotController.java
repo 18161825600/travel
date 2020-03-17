@@ -85,4 +85,9 @@ public class ScenicSpotController {
     public TravelJsonResult<AllScenicSpotResponse> selectSomeByScenicSpotTypes(@RequestBody SelectScenicSpotTypesRequest selectScenicSpotTypesRequest){
         return TravelJsonResult.ok(scenicSpotService.selectSomeByScenicSpotTypes(selectScenicSpotTypesRequest));
     }
+
+    @PostMapping(value = "three/in/one")
+    public TravelJsonResult<AllScenicSpotResponse> threeInOne(@RequestBody ThreeInOneRequest request){
+        return TravelJsonResult.ok(scenicSpotService.threeInOne(request));
+    }
 }
