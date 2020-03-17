@@ -5,6 +5,7 @@ import com.example.travel.request.*;
 import com.example.travel.response.*;
 import com.example.travel.service.CommentService;
 import com.github.pagehelper.PageInfo;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,15 @@ public class CommentController {
     @DeleteMapping(value = "delete/comment")
     public TravelJsonResult<String> deleteComment(@RequestBody IdsRequest idsRequest){
         return TravelJsonResult.ok("删除了"+commentService.deleteComment(idsRequest)+"条记录");
+    }
+
+    @ApiOperation(value = "删除景点详情里面的评论")
+    @DeleteMapping(value = "remove/comment")
+    public TravelJsonResult<Integer> removeComment(@RequestBody RemoveCommentRequest request){
+        Integer integer = commentService.removeComment(request);
+        if(integer==1){
+            return TravelJsonResult.ok();
+        }else return TravelJsonResult.errorMsg("false");
     }
 
     @PutMapping(value = "update/comment")

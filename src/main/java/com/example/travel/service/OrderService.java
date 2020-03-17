@@ -20,6 +20,10 @@ public interface OrderService {
 
     CallWhatResponse callWhat(CallWhatRequest request);
 
+    OrderIdsResponse changeOrderStateByIds(OrderIdsRequest request);
+
+    Integer closePayOrder(ClosePayOrderRequest request);
+
     Integer payOrder(PayOrderRequest payOrderRequest);
 
     Integer payOrderByOther(PayOrderByOtherRequest payOrderByOtherRequest);
@@ -38,11 +42,11 @@ public interface OrderService {
 
     AllOrderResponse selectOrderByTicketId(SelectOrderByTicketIdRequest selectOrderByTicketIdRequest);
 
-    AllSelectOrderResponse selectShoppingCar(UserIdRequest userIdRequest);
+    AllOrderResponse selectShoppingCar(UserIdRequest userIdRequest);
 
-    AllSelectOrderResponse selectWaitPayment(UserIdRequest userIdRequest);
+    AllOrderResponse selectWaitPayment(UserIdRequest userIdRequest);
 
-    AllSelectOrderResponse selectChargeBack(UserIdRequest userIdRequest);
+    AllOrderResponse selectChargeBack(UserIdRequest userIdRequest);
 
-    AllSelectOrderResponse selectSuccessOrder(UserIdRequest userIdRequest);
+    AllOrderResponse selectSuccessOrder(UserIdRequest userIdRequest);
 }

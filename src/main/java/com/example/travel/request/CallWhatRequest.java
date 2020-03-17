@@ -3,6 +3,7 @@ package com.example.travel.request;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 public class CallWhatRequest implements Serializable {
@@ -10,5 +11,5 @@ public class CallWhatRequest implements Serializable {
 
     private Long userId;
 
-    private Long data;
+    private List<Long> ids;
 }

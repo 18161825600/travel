@@ -176,7 +176,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public PageInfo<UserResponse> selectAllUser(PageNumRequest pageNumRequest) {
-        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
+        PageHelper.startPage(pageNumRequest.getPageNum(),10);
         List<User> users = userDao.selectAllUser();
         List<UserResponse> list = new ArrayList<>();
         for(User user : users){

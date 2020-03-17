@@ -115,7 +115,7 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
 
     @Override
     public AllScenicSpotResponse selectAllScenicSpot(PageNumRequest pageNumRequest) {
-        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
+        PageHelper.startPage(pageNumRequest.getPageNum(),10);
         List<ScenicSpot> scenicSpots = scenicSpotDao.selectAllScenicSpot();
         PageInfo<ScenicSpot> pageInfo = new PageInfo<>(scenicSpots);
 

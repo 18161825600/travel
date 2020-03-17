@@ -12,6 +12,6 @@ public class FavoriteScenicResponse implements Serializable {
 
     private String nickName;
 
-    private Date createTime;
+    private String createTime;
 
 }

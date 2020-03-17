@@ -22,7 +22,7 @@ public class FavoriteUserResponse implements Serializable {
 
     private String img;
 
-    private Date createTime;
+    private String createTime;
 
     private Integer favoritePeopleNumber;
 

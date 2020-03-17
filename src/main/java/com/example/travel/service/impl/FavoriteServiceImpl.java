@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Slf4j
@@ -60,7 +61,7 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     @Override
     public AllFavoriteResponse selectAllFavorite(PageNumRequest pageNumRequest) {
-        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
+        PageHelper.startPage(pageNumRequest.getPageNum(),10);
         List<Favorite> favorites = favoriteDao.selectAllFavorite();
         PageInfo<Favorite> pageInfo = new PageInfo<>(favorites);
 
@@ -96,7 +97,7 @@ public class FavoriteServiceImpl implements FavoriteService {
 
             favoriteUserResponse.setId(favorite.getId());
             favoriteUserResponse.setScenicSpotId(favorite.getScenicSpotId());
-            favoriteUserResponse.setCreateTime(favorite.getCreateTime());
+            favoriteUserResponse.setCreateTime(changeDate(favorite.getCreateTime()));
             favoriteUserResponse.setFavoritePeopleNumber(favoriteDao.countFavorteByScenicId(favorite.getScenicSpotId()));
             list.add(favoriteUserResponse);
         }
@@ -116,7 +117,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         List<FavoriteScenicResponse> list = new ArrayList<>();
         for(Favorite favorite : favoriteList){
             FavoriteScenicResponse favoriteScenicResponse = new FavoriteScenicResponse();
-            favoriteScenicResponse.setCreateTime(favorite.getCreateTime());
+            favoriteScenicResponse.setCreateTime(changeDate(favorite.getCreateTime()));
 
             User user = userDao.selectUserById(favorite.getUserId());
             favoriteScenicResponse.setNickName(user.getNickName());
@@ -139,7 +140,12 @@ public class FavoriteServiceImpl implements FavoriteService {
 
         User user = userDao.selectUserById(favorite.getUserId());
         favoriteResponse.setNickName(user.getNickName());
-        favoriteResponse.setCreateTime(favorite.getCreateTime());
+        favoriteResponse.setCreateTime(changeDate(favorite.getCreateTime()));
         return favoriteResponse;
+    }
+
+    private String changeDate(Date date){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return dateFormat.format(date);
     }
 }

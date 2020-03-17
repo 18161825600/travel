@@ -49,6 +49,11 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    public Integer removeComment(RemoveCommentRequest request) {
+        return commentDao.deleteComment(request.getCommentId());
+    }
+
+    @Override
     public Integer updateComment(UpdateCommentRequest updateCommentRequest) {
         Comment comment = commentDao.selectCommentById(updateCommentRequest.getId());
         comment.setComment(updateCommentRequest.getComment());
@@ -65,7 +70,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public AllCommentResponse selectAllComment(PageNumRequest pageNumRequest) {
-        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
+        PageHelper.startPage(pageNumRequest.getPageNum(),10);
         List<Comment> comments = commentDao.selectAllComment();
         PageInfo<Comment> pageInfo = new PageInfo<>(comments);
 
@@ -117,11 +122,13 @@ public class CommentServiceImpl implements CommentService {
         int number=1;
         for(Comment comment : commentList){
             CommentScenicResponse commentScenicResponse = new CommentScenicResponse();
+            commentScenicResponse.setCommentId(comment.getId());
             commentScenicResponse.setNumber(number);
             commentScenicResponse.setComment(comment.getComment());
             commentScenicResponse.setCreateTime(changeDate(comment.getCreateTime()));
 
             User user = userDao.selectUserById(comment.getUserId());
+            commentScenicResponse.setUserId(user.getId());
             commentScenicResponse.setNickName(user.getNickName());
             commentScenicResponse.setImgUrl(user.getImgUrl());
 
@@ -146,10 +153,8 @@ public class CommentServiceImpl implements CommentService {
         return commentResponse;
     }
 
-    public String changeDate(Date date){
-        log.info("date-{}",date);
+    private String changeDate(Date date){
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        log.info("dateFormat-{}",dateFormat.format(date));
         return dateFormat.format(date);
     }
 }

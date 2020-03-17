@@ -64,7 +64,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public AllTicketResponse selectAllTicket(PageNumRequest pageNumRequest) {
-        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
+        PageHelper.startPage(pageNumRequest.getPageNum(),10);
         List<Ticket> tickets = ticketDao.selectAllTicket();
         PageInfo<Ticket> pageInfo = new PageInfo<>(tickets);
 

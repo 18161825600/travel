@@ -22,6 +22,6 @@ public class FavoriteResponse implements Serializable {
 
     private String nickName;
 
-    private Date createTime;
+    private String createTime;
 
 }

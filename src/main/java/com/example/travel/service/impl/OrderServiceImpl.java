@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -150,10 +151,10 @@ public class OrderServiceImpl implements OrderService {
             order.setTicketId(addShoppingCarRequest.getTicketId());
             order.setOrderState((short)0);
             order.setCreateTime(new Date());
+            orderDao.insertOrder(order);
             ids.add(order.getId());
             list.add(order);
         }
-        orderDao.addSomeOrder(list);
         response.setIds(ids);
         return response;
     }
@@ -201,18 +202,45 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public CallWhatResponse callWhat(CallWhatRequest request) {
         CallWhatResponse response = new CallWhatResponse();
-        Order order = orderDao.selectOrderById(request.getData());
-        order.setOrderState((short)1);
-        order.setUpdateTime(new Date());
-        orderDao.updateOrder(order);
+        List<Long> ids = request.getIds();
+        for (Long id : ids) {
+            Order order = orderDao.selectOrderById(id);
+            order.setOrderState((short)1);
+            order.setUpdateTime(new Date());
+            orderDao.updateOrder(order);
 
-        User user = userDao.selectUserById(request.getUserId());
-        user.setLastMoney(user.getLastMoney()-order.getTotalMoney());
-        user.setUpdateTime(new Date());
-        userDao.updateUser(user);
-
+            User user = userDao.selectUserById(request.getUserId());
+            user.setLastMoney(user.getLastMoney()-order.getTotalMoney());
+            user.setUpdateTime(new Date());
+            userDao.updateUser(user);
+        }
         response.setMsg("支付成功");
         return response;
+    }
+
+    @Override
+    public OrderIdsResponse changeOrderStateByIds(OrderIdsRequest request) {
+        OrderIdsResponse response = new OrderIdsResponse();
+        List<Long> ids = request.getIds();
+        //提交购物车订单的时候将订单状态变成等待付款
+        for (Long id : ids) {
+            Order order = orderDao.selectOrderById(id);
+            order.setOrderState((short)0);
+            order.setUpdateTime(new Date());
+            orderDao.updateOrder(order);
+        }
+        response.setIds(ids);
+        return response;
+    }
+
+    @Override
+    public Integer closePayOrder(ClosePayOrderRequest request) {
+        Order order = orderDao.selectOrderById(request.getId());
+        if(order.getOrderState()==0) {
+            order.setOrderState((short) 5);
+            order.setUpdateTime(new Date());
+            return orderDao.updateOrder(order);
+        }else return 0;
     }
 
     @Override
@@ -222,17 +250,21 @@ public class OrderServiceImpl implements OrderService {
         List<Long> ids = payOrderRequest.getIds();
         List<Order> orders = new ArrayList<>();
 
+        //判断用户余额，余额够
         if(user.getLastMoney()>=payOrderRequest.getTotalMoney()){
+            //用户余额减钱
             user.setLastMoney(user.getLastMoney()-payOrderRequest.getTotalMoney());
             user.setUpdateTime(new Date());
             userDao.updateUser(user);
 
+            //管理员账号加钱
             User admin = userDao.selectUserById(1L);
             admin.setLastMoney(admin.getLastMoney()+payOrderRequest.getTotalMoney());
             admin.setUpdateTime(new Date());
             userDao.updateUser(admin);
 
             for (Long id : ids) {
+                //订单状态变成支付成功
                 Order order = orderDao.selectOrderById(id);
                 order.setOrderState((short)1);
                 order.setUpdateTime(new Date());
@@ -241,6 +273,7 @@ public class OrderServiceImpl implements OrderService {
             return orderDao.payOrder(orders);
         }else {
             for (Long id : ids) {
+                //余额不足，订单状态变成等待支付
                 Order order = orderDao.selectOrderById(id);
                 order.setOrderState((short)0);
                 order.setUpdateTime(new Date());
@@ -326,7 +359,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public AllOrderResponse selectAllOrder(PageNumRequest pageNumRequest) {
-        PageHelper.startPage(1,pageNumRequest.getPageNum()*10);
+        PageHelper.startPage(pageNumRequest.getPageNum(),10);
         List<Order> orders = orderDao.selectAllOrder();
         PageInfo<Order> pageInfo = new PageInfo<>(orders);
 
@@ -361,42 +394,54 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public AllSelectOrderResponse selectShoppingCar(UserIdRequest userIdRequest) {
+    public AllOrderResponse selectShoppingCar(UserIdRequest userIdRequest) {
+        PageHelper.startPage(userIdRequest.getPageNum(),10);
         List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4);
-        if(!CollectionUtils.isEmpty(orders)) {
-            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
-            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4));
-            return allSelectOrderResponse;
+        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+        List<Order> list = pageInfo.getList();
+        if(!CollectionUtils.isEmpty(list)) {
+            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4));
+            return allOrderResponse;
         }else return null;
     }
 
     @Override
-    public AllSelectOrderResponse selectWaitPayment(UserIdRequest userIdRequest) {
+    public AllOrderResponse selectWaitPayment(UserIdRequest userIdRequest) {
+        PageHelper.startPage(userIdRequest.getPageNum(),10);
         List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0);
-        if(!CollectionUtils.isEmpty(orders)) {
-            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
-            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0));
-            return allSelectOrderResponse;
+        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+        List<Order> list = pageInfo.getList();
+        if(!CollectionUtils.isEmpty(list)) {
+            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0));
+            return allOrderResponse;
         }else return null;
     }
 
     @Override
-    public AllSelectOrderResponse selectChargeBack(UserIdRequest userIdRequest) {
+    public AllOrderResponse selectChargeBack(UserIdRequest userIdRequest) {
+        PageHelper.startPage(userIdRequest.getPageNum(),10);
         List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2);
-        if(!CollectionUtils.isEmpty(orders)) {
-            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
-            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2));
-            return allSelectOrderResponse;
+        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+        List<Order> list = pageInfo.getList();
+        if(!CollectionUtils.isEmpty(list)) {
+            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2));
+            return allOrderResponse;
         }else return null;
     }
 
     @Override
-    public AllSelectOrderResponse selectSuccessOrder(UserIdRequest userIdRequest) {
+    public AllOrderResponse selectSuccessOrder(UserIdRequest userIdRequest) {
+        PageHelper.startPage(userIdRequest.getPageNum(),10);
         List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1);
-        if(!CollectionUtils.isEmpty(orders)) {
-            AllSelectOrderResponse allSelectOrderResponse = changeAllSelectOrderResponse(orders);
-            allSelectOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1));
-            return allSelectOrderResponse;
+        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+        List<Order> list = pageInfo.getList();
+        if(!CollectionUtils.isEmpty(list)) {
+            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1));
+            return allOrderResponse;
         }else return null;
     }
 
@@ -407,27 +452,39 @@ public class OrderServiceImpl implements OrderService {
         OrderResponse orderResponse = new OrderResponse();
 
         orderResponse.setId(order.getId());
+        orderResponse.setScenicSpotId(scenicSpot.getId());
         orderResponse.setNickName(user.getNickName());
         orderResponse.setScenicSpotName(scenicSpot.getScenicSpotName());
+        orderResponse.setImg(scenicSpot.getImg());
         orderResponse.setTicketName(ticket.getTicketName());
         orderResponse.setTicketDescribe(ticket.getTicketDescribe());
         orderResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
         orderResponse.setChildrenTicketPrice(ticket.getChildrenTicketPrice());
-        orderResponse.setAdultNumber(order.getAdultNumber());
-        orderResponse.setChildrenNumber(order.getChildrenNumber());
         orderResponse.setTotalMoney(order.getTotalMoney());
-        orderResponse.setCreateTime(order.getCreateTime());
+        orderResponse.setCreateTime(changeDate(order.getCreateTime()));
+
+        if(order.getAdultNumber().equals(0)){
+            orderResponse.setSpec("规格:学生");
+            orderResponse.setNumber(order.getChildrenNumber());
+            orderResponse.setPrice(ticket.getChildrenTicketPrice());
+        }else {
+            orderResponse.setSpec("规格:成人");
+            orderResponse.setNumber(order.getAdultNumber());
+            orderResponse.setPrice(ticket.getAdultTicketPrice());
+        }
 
         if(order.getOrderState()==0){
-            orderResponse.setOrderState("等待付款");
+            orderResponse.setOrderState("unpaid");//等待支付
         }else if(order.getOrderState()==1){
-            orderResponse.setOrderState("交易成功");
+            orderResponse.setOrderState("completed");//支付成功
         }else if(order.getOrderState()==2){
-            orderResponse.setOrderState("已退款");
+            orderResponse.setOrderState("refunds");//已退款
         }else if(order.getOrderState()==3){
-            orderResponse.setOrderState("门票已过期");
+            orderResponse.setOrderState("expire");//门票过期
+        }else if (order.getOrderState()==4){
+            orderResponse.setOrderState("shoppingCar");//购物车
         }else {
-            orderResponse.setOrderState("购物车中未付款");
+            orderResponse.setOrderState("close");//关闭支付
         }
 
         return orderResponse;
@@ -514,5 +571,10 @@ public class OrderServiceImpl implements OrderService {
         ticketDao.updateTicket(ticket);
 
         return order;
+    }
+
+    private String changeDate(Date date){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return dateFormat.format(date);
     }
 }

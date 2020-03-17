@@ -12,4 +12,6 @@ public class PayOrderByOtherRequest implements Serializable {
     private List<Long> ids;
 
     private Double totalMoney;
+
+    private Long userId;
 }

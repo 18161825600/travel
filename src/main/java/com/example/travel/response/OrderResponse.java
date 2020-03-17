@@ -10,28 +10,35 @@ public class OrderResponse implements Serializable {
 
     private static final long serialVersionUID = 8064642127672951927L;
 
-    private Long id;
+    private Long id;//订单id
 
-    private String nickName;
+    private Long scenicSpotId;//景点id
 
-    private String scenicSpotName;
+    private String nickName;//用户昵称
 
-    private String ticketName;
+    private String scenicSpotName;//景点名称
 
-    private String ticketDescribe;
+    private String img;//景点图片
 
-    private Double adultTicketPrice;
+    private String ticketName;//门票名称
 
-    private Double childrenTicketPrice;
+    private String ticketDescribe;//门票描述
 
-    private Integer adultNumber;
+    private Double adultTicketPrice;//成人票价格
 
-    private Integer childrenNumber;
+    private Double childrenTicketPrice;//儿童票价格
 
-    private Double totalMoney;
+    private Double price;//用户买的票的单价
 
-    private String orderState;
+    private String spec;//规格
 
-    private Date createTime;
+    private Integer number;//购买门票数量
 
+    private Double totalMoney;//门票总价
+
+    private String orderState;//门票状态
+
+    private String createTime;//创建订单时间
+
+    private final Boolean selected = Boolean.FALSE;
 }

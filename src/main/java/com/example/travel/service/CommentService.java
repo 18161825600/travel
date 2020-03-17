@@ -12,6 +12,8 @@ public interface CommentService {
 
     Integer deleteComment(IdsRequest idsRequest);
 
+    Integer removeComment(RemoveCommentRequest request);
+
     Integer updateComment(UpdateCommentRequest updateCommentRequest);
 
     CommentResponse selectCommentById(IdRequest idRequest);

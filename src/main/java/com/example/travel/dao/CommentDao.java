@@ -25,6 +25,10 @@ public class CommentDao {
         return commentMapper.deleteByExample(example);
     }
 
+    public Integer deleteComment(Long id){
+        return commentMapper.deleteByPrimaryKey(id);
+    }
+
     public Integer updateComment(Comment comment){
         return commentMapper.updateByPrimaryKeySelective(comment);
     }

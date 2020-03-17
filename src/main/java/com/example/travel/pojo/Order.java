@@ -28,7 +28,7 @@ public class Order {
     private Double totalMoney;
 
     /**
-     * 0余额不足等待付款1交易成功2已退款3门票已过期无法退款4购物车内未付款
+     * 0等待付款1交易成功2已退款3门票已过期无法退款4购物车内未付款5取消支付
      */
     @Column(name = "order_state")
     private Short orderState;
