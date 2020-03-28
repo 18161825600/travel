@@ -371,14 +371,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public AllOrderResponse selectOrderByUserId(SelectOrderByUserIdRequest selectOrderByUserIdRequest) {
-        PageHelper.startPage(selectOrderByUserIdRequest.getPageNum(),10);
-        List<Order> orders = orderDao.selectOrderByUserId(selectOrderByUserIdRequest.getUserId());
-        PageInfo<Order> pageInfo = new PageInfo<>(orders);
+        if(!StringUtils.isEmpty(selectOrderByUserIdRequest.getUserId())) {
+            PageHelper.startPage(selectOrderByUserIdRequest.getPageNum(), 10);
+            List<Order> orders = orderDao.selectOrderByUserId(selectOrderByUserIdRequest.getUserId());
+            PageInfo<Order> pageInfo = new PageInfo<>(orders);
 
-        List<Order> orderList = pageInfo.getList();
-        AllOrderResponse allOrderResponse = changeAllOrderResponse(orderList);
-        allOrderResponse.setTotal(orderDao.countOrderByUserId(selectOrderByUserIdRequest.getUserId()));
-        return allOrderResponse;
+            List<Order> orderList = pageInfo.getList();
+            if(!CollectionUtils.isEmpty(orderList)) {
+                AllOrderResponse allOrderResponse = changeAllOrderResponse(orderList);
+                allOrderResponse.setTotal(orderDao.countOrderByUserId(selectOrderByUserIdRequest.getUserId()));
+                return allOrderResponse;
+            }else return null;
+        }else return null;
     }
 
     @Override
@@ -395,53 +399,61 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public AllOrderResponse selectShoppingCar(UserIdRequest userIdRequest) {
-        PageHelper.startPage(userIdRequest.getPageNum(),10);
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4);
-        PageInfo<Order> pageInfo = new PageInfo<>(orders);
-        List<Order> list = pageInfo.getList();
-        if(!CollectionUtils.isEmpty(list)) {
-            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
-            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4));
-            return allOrderResponse;
+        if(!StringUtils.isEmpty(userIdRequest.getUserId())) {
+            PageHelper.startPage(userIdRequest.getPageNum(), 10);
+            List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4);
+            PageInfo<Order> pageInfo = new PageInfo<>(orders);
+            List<Order> list = pageInfo.getList();
+            if (!CollectionUtils.isEmpty(list)) {
+                AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+                allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 4));
+                return allOrderResponse;
+            } else return null;
         }else return null;
     }
 
     @Override
     public AllOrderResponse selectWaitPayment(UserIdRequest userIdRequest) {
-        PageHelper.startPage(userIdRequest.getPageNum(),10);
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0);
-        PageInfo<Order> pageInfo = new PageInfo<>(orders);
-        List<Order> list = pageInfo.getList();
-        if(!CollectionUtils.isEmpty(list)) {
-            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
-            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0));
-            return allOrderResponse;
+        if(!StringUtils.isEmpty(userIdRequest.getUserId())) {
+            PageHelper.startPage(userIdRequest.getPageNum(), 10);
+            List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0);
+            PageInfo<Order> pageInfo = new PageInfo<>(orders);
+            List<Order> list = pageInfo.getList();
+            if (!CollectionUtils.isEmpty(list)) {
+                AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+                allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 0));
+                return allOrderResponse;
+            } else return null;
         }else return null;
     }
 
     @Override
     public AllOrderResponse selectChargeBack(UserIdRequest userIdRequest) {
-        PageHelper.startPage(userIdRequest.getPageNum(),10);
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2);
-        PageInfo<Order> pageInfo = new PageInfo<>(orders);
-        List<Order> list = pageInfo.getList();
-        if(!CollectionUtils.isEmpty(list)) {
-            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
-            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2));
-            return allOrderResponse;
+        if(!StringUtils.isEmpty(userIdRequest.getUserId())) {
+            PageHelper.startPage(userIdRequest.getPageNum(), 10);
+            List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2);
+            PageInfo<Order> pageInfo = new PageInfo<>(orders);
+            List<Order> list = pageInfo.getList();
+            if (!CollectionUtils.isEmpty(list)) {
+                AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+                allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 2));
+                return allOrderResponse;
+            } else return null;
         }else return null;
     }
 
     @Override
     public AllOrderResponse selectSuccessOrder(UserIdRequest userIdRequest) {
-        PageHelper.startPage(userIdRequest.getPageNum(),10);
-        List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1);
-        PageInfo<Order> pageInfo = new PageInfo<>(orders);
-        List<Order> list = pageInfo.getList();
-        if(!CollectionUtils.isEmpty(list)) {
-            AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
-            allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1));
-            return allOrderResponse;
+        if(!StringUtils.isEmpty(userIdRequest.getUserId())) {
+            PageHelper.startPage(userIdRequest.getPageNum(), 10);
+            List<Order> orders = orderDao.selectOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1);
+            PageInfo<Order> pageInfo = new PageInfo<>(orders);
+            List<Order> list = pageInfo.getList();
+            if (!CollectionUtils.isEmpty(list)) {
+                AllOrderResponse allOrderResponse = changeAllOrderResponse(orders);
+                allOrderResponse.setTotal(orderDao.countOrderByUserIdAndState(userIdRequest.getUserId(), (short) 1));
+                return allOrderResponse;
+            } else return null;
         }else return null;
     }
 

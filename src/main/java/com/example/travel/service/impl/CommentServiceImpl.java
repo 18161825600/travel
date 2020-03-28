@@ -16,6 +16,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -75,69 +77,79 @@ public class CommentServiceImpl implements CommentService {
         PageInfo<Comment> pageInfo = new PageInfo<>(comments);
 
         List<Comment> commentList = pageInfo.getList();
-        AllCommentResponse allCommentResponse = new AllCommentResponse();
-        List<CommentResponse> list = new ArrayList<>();
-        for(Comment comment : commentList){
-            CommentResponse commentResponse = changeCommentResponse(comment);
-            list.add(commentResponse);
-        }
-        allCommentResponse.setCommentResponseList(list);
-        allCommentResponse.setTotal(commentDao.countAllComment());
-        return allCommentResponse;
+        if(!CollectionUtils.isEmpty(commentList)) {
+            AllCommentResponse allCommentResponse = new AllCommentResponse();
+            List<CommentResponse> list = new ArrayList<>();
+            for (Comment comment : commentList) {
+                CommentResponse commentResponse = changeCommentResponse(comment);
+                list.add(commentResponse);
+            }
+            allCommentResponse.setCommentResponseList(list);
+            allCommentResponse.setTotal(commentDao.countAllComment());
+            return allCommentResponse;
+        }else return null;
     }
 
     @Override
     public AllCommentUserResponse selectCommentByUserId(SelectCommentByUserIdRequest selectCommentByUserIdRequest) {
-        PageHelper.startPage(selectCommentByUserIdRequest.getPageNum(),10);
-        List<Comment> comments = commentDao.selectCommentByUserId(selectCommentByUserIdRequest.getUserId());
-        PageInfo<Comment> pageInfo = new PageInfo<>(comments);
+        if(!StringUtils.isEmpty(selectCommentByUserIdRequest.getUserId())) {
+            PageHelper.startPage(selectCommentByUserIdRequest.getPageNum(), 10);
+            List<Comment> comments = commentDao.selectCommentByUserId(selectCommentByUserIdRequest.getUserId());
+            PageInfo<Comment> pageInfo = new PageInfo<>(comments);
 
-        List<Comment> commentList = pageInfo.getList();
-        AllCommentUserResponse allCommentUserResponse = new AllCommentUserResponse();
-        List<CommentUserResponse> list = new ArrayList<>();
-        for(Comment comment : commentList){
-            CommentUserResponse commentUserResponse = new CommentUserResponse();
-            commentUserResponse.setCreateTime(changeDate(comment.getCreateTime()));
-            commentUserResponse.setComment(comment.getComment());
+            List<Comment> commentList = pageInfo.getList();
+            if(!CollectionUtils.isEmpty(commentList)) {
+                AllCommentUserResponse allCommentUserResponse = new AllCommentUserResponse();
+                List<CommentUserResponse> list = new ArrayList<>();
+                for (Comment comment : commentList) {
+                    CommentUserResponse commentUserResponse = new CommentUserResponse();
+                    commentUserResponse.setCreateTime(changeDate(comment.getCreateTime()));
+                    commentUserResponse.setComment(comment.getComment());
 
-            ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(comment.getScenicSpotId());
-            commentUserResponse.setScenicSpotName(scenicSpot.getScenicSpotName());
+                    ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(comment.getScenicSpotId());
+                    commentUserResponse.setScenicSpotName(scenicSpot.getScenicSpotName());
 
-            list.add(commentUserResponse);
-        }
-        allCommentUserResponse.setCommentUserResponseList(list);
-        allCommentUserResponse.setTotal(commentDao.countByUserId(selectCommentByUserIdRequest.getUserId()));
-        return allCommentUserResponse;
+                    list.add(commentUserResponse);
+                }
+                allCommentUserResponse.setCommentUserResponseList(list);
+                allCommentUserResponse.setTotal(commentDao.countByUserId(selectCommentByUserIdRequest.getUserId()));
+                return allCommentUserResponse;
+            }else return null;
+        }else return null;
     }
 
     @Override
     public AllCommentScenicResponse selectCommentByScenicId(SelectCommentByScenicIdRequest selectCommentByScenicIdRequest) {
-        PageHelper.startPage(selectCommentByScenicIdRequest.getPageNum(), 10);
-        List<Comment> comments = commentDao.selectCommentByScenicId(selectCommentByScenicIdRequest.getScenicSpotId());
-        PageInfo<Comment> pageInfo = new PageInfo<>(comments);
+        if(!StringUtils.isEmpty(selectCommentByScenicIdRequest.getScenicSpotId())) {
+            PageHelper.startPage(selectCommentByScenicIdRequest.getPageNum(), 10);
+            List<Comment> comments = commentDao.selectCommentByScenicId(selectCommentByScenicIdRequest.getScenicSpotId());
+            PageInfo<Comment> pageInfo = new PageInfo<>(comments);
 
-        List<Comment> commentList = pageInfo.getList();
-        AllCommentScenicResponse allCommentScenicResponse = new AllCommentScenicResponse();
-        List<CommentScenicResponse> list = new ArrayList<>();
-        int number=1;
-        for(Comment comment : commentList){
-            CommentScenicResponse commentScenicResponse = new CommentScenicResponse();
-            commentScenicResponse.setCommentId(comment.getId());
-            commentScenicResponse.setNumber(number);
-            commentScenicResponse.setComment(comment.getComment());
-            commentScenicResponse.setCreateTime(changeDate(comment.getCreateTime()));
+            List<Comment> commentList = pageInfo.getList();
+            if(!CollectionUtils.isEmpty(commentList)) {
+                AllCommentScenicResponse allCommentScenicResponse = new AllCommentScenicResponse();
+                List<CommentScenicResponse> list = new ArrayList<>();
+                int number = 1;
+                for (Comment comment : commentList) {
+                    CommentScenicResponse commentScenicResponse = new CommentScenicResponse();
+                    commentScenicResponse.setCommentId(comment.getId());
+                    commentScenicResponse.setNumber(number);
+                    commentScenicResponse.setComment(comment.getComment());
+                    commentScenicResponse.setCreateTime(changeDate(comment.getCreateTime()));
 
-            User user = userDao.selectUserById(comment.getUserId());
-            commentScenicResponse.setUserId(user.getId());
-            commentScenicResponse.setNickName(user.getNickName());
-            commentScenicResponse.setImgUrl(user.getImgUrl());
+                    User user = userDao.selectUserById(comment.getUserId());
+                    commentScenicResponse.setUserId(user.getId());
+                    commentScenicResponse.setNickName(user.getNickName());
+                    commentScenicResponse.setImgUrl(user.getImgUrl());
 
-            number=number+1;
-            list.add(commentScenicResponse);
-        }
-        allCommentScenicResponse.setCommentScenicResponseList(list);
-        allCommentScenicResponse.setTotal(commentDao.countByScenicId(selectCommentByScenicIdRequest.getScenicSpotId()));
-        return allCommentScenicResponse;
+                    number = number + 1;
+                    list.add(commentScenicResponse);
+                }
+                allCommentScenicResponse.setCommentScenicResponseList(list);
+                allCommentScenicResponse.setTotal(commentDao.countByScenicId(selectCommentByScenicIdRequest.getScenicSpotId()));
+                return allCommentScenicResponse;
+            }else return null;
+        }else return null;
     }
 
     private CommentResponse changeCommentResponse(Comment comment){

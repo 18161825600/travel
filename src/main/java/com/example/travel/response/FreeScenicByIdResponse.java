@@ -29,6 +29,10 @@ public class FreeScenicByIdResponse implements Serializable {
 
     private BigDecimal sDimension;
 
+    private Double adultTicketPrice;
+
+    private Double childrenTicketPrice;
+
     private String ticketDescribe;
 
     private List<ScenicSpotCommentBo> scenicSpotCommentBos;

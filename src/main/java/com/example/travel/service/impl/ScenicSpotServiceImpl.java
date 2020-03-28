@@ -238,6 +238,8 @@ public class ScenicSpotServiceImpl implements ScenicSpotService {
             freeScenicByIdResponse.setSLongitude(scenicSpot.getsLongitude());
 
             freeScenicByIdResponse.setTicketDescribe(ticket.getTicketDescribe());
+            freeScenicByIdResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
+            freeScenicByIdResponse.setChildrenTicketPrice(ticket.getChildrenTicketPrice());
 
             List<Comment> comments = commentDao.selectCommentByScenicId(scenicSpot.getId());
             freeScenicByIdResponse.setScenicSpotCommentBos(changeScenicSpotCommentBo(comments));

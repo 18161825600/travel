@@ -18,6 +18,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -79,31 +81,35 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     @Override
     public AllFavoriteUserResponse selectFavoriteByUserId(SelectFavoriteByUserIdRequest selectFavoriteByUserIdRequest) {
-        PageHelper.startPage(selectFavoriteByUserIdRequest.getPageNum(),10);
-        List<Favorite> favorites = favoriteDao.selectFavoriteByUserId(selectFavoriteByUserIdRequest.getId());
-        PageInfo<Favorite> pageInfo = new PageInfo<>(favorites);
+        if(!StringUtils.isEmpty(selectFavoriteByUserIdRequest.getId())) {
+            PageHelper.startPage(selectFavoriteByUserIdRequest.getPageNum(), 10);
+            List<Favorite> favorites = favoriteDao.selectFavoriteByUserId(selectFavoriteByUserIdRequest.getId());
+            PageInfo<Favorite> pageInfo = new PageInfo<>(favorites);
 
-        List<Favorite> favoriteList = pageInfo.getList();
-        AllFavoriteUserResponse allFavoriteUserResponse = new AllFavoriteUserResponse();
-        List<FavoriteUserResponse> list = new ArrayList<>();
-        for(Favorite favorite : favoriteList){
-            FavoriteUserResponse favoriteUserResponse = new FavoriteUserResponse();
+            List<Favorite> favoriteList = pageInfo.getList();
+            if(!CollectionUtils.isEmpty(favoriteList)) {
+                AllFavoriteUserResponse allFavoriteUserResponse = new AllFavoriteUserResponse();
+                List<FavoriteUserResponse> list = new ArrayList<>();
+                for (Favorite favorite : favoriteList) {
+                    FavoriteUserResponse favoriteUserResponse = new FavoriteUserResponse();
 
-            ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(favorite.getScenicSpotId());
-            BeanUtils.copyProperties(scenicSpot,favoriteUserResponse);
+                    ScenicSpot scenicSpot = scenicSpotDao.selectScenicSpotById(favorite.getScenicSpotId());
+                    BeanUtils.copyProperties(scenicSpot, favoriteUserResponse);
 
-            Ticket ticket = ticketDao.selectTicketByScenicId(scenicSpot.getId());
-            favoriteUserResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
+                    Ticket ticket = ticketDao.selectTicketByScenicId(scenicSpot.getId());
+                    favoriteUserResponse.setAdultTicketPrice(ticket.getAdultTicketPrice());
 
-            favoriteUserResponse.setId(favorite.getId());
-            favoriteUserResponse.setScenicSpotId(favorite.getScenicSpotId());
-            favoriteUserResponse.setCreateTime(changeDate(favorite.getCreateTime()));
-            favoriteUserResponse.setFavoritePeopleNumber(favoriteDao.countFavorteByScenicId(favorite.getScenicSpotId()));
-            list.add(favoriteUserResponse);
-        }
-        allFavoriteUserResponse.setFavoriteUserResponseList(list);
-        allFavoriteUserResponse.setTotal(favoriteDao.countFavoriteByUserId(selectFavoriteByUserIdRequest.getId()));
-        return allFavoriteUserResponse;
+                    favoriteUserResponse.setId(favorite.getId());
+                    favoriteUserResponse.setScenicSpotId(favorite.getScenicSpotId());
+                    favoriteUserResponse.setCreateTime(changeDate(favorite.getCreateTime()));
+                    favoriteUserResponse.setFavoritePeopleNumber(favoriteDao.countFavorteByScenicId(favorite.getScenicSpotId()));
+                    list.add(favoriteUserResponse);
+                }
+                allFavoriteUserResponse.setFavoriteUserResponseList(list);
+                allFavoriteUserResponse.setTotal(favoriteDao.countFavoriteByUserId(selectFavoriteByUserIdRequest.getId()));
+                return allFavoriteUserResponse;
+            }else return null;
+        }else return null;
     }
 
     @Override
