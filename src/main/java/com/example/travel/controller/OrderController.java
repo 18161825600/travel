@@ -98,11 +98,8 @@ public class OrderController {
 
     @ApiOperation(value = "通过别的方式支付")
     @PutMapping(value = "pay/order/by/other")
-    public TravelJsonResult<String> payOrderByOther(@RequestBody PayOrderByOtherRequest payOrderByOtherRequest){
-        Integer integer = orderService.payOrderByOther(payOrderByOtherRequest);
-        if(integer==0){
-            return TravelJsonResult.errorMsg("false");
-        }else return TravelJsonResult.ok();
+    public TravelJsonResult<PayOrderByOtherResponse> payOrderByOther(@RequestBody PayOrderByOtherRequest payOrderByOtherRequest){
+        return TravelJsonResult.ok(orderService.payOrderByOther(payOrderByOtherRequest));
     }
 
     @ApiOperation(value = "批量删除订单")

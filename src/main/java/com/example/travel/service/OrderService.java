@@ -26,7 +26,7 @@ public interface OrderService {
 
     Integer payOrder(PayOrderRequest payOrderRequest);
 
-    Integer payOrderByOther(PayOrderByOtherRequest payOrderByOtherRequest);
+    PayOrderByOtherResponse payOrderByOther(PayOrderByOtherRequest payOrderByOtherRequest);
 
     Integer deleteOrder(IdsRequest idsRequest);
 

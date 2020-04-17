@@ -285,9 +285,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Integer payOrderByOther(PayOrderByOtherRequest payOrderByOtherRequest) {
+    public PayOrderByOtherResponse payOrderByOther(PayOrderByOtherRequest payOrderByOtherRequest) {
         List<Long> ids = payOrderByOtherRequest.getIds();
         List<Order> orders = new ArrayList<>();
+        PayOrderByOtherResponse response = new PayOrderByOtherResponse();
+        List<OrderByOtherResponse> orderByOtherResponselist = new ArrayList<>();
 
         for (Long id : ids) {
             Order order = orderDao.selectOrderById(id);
@@ -295,7 +297,18 @@ public class OrderServiceImpl implements OrderService {
             order.setUpdateTime(new Date());
             orders.add(order);
         }
-        return orderDao.payOrder(orders);
+        orderDao.payOrder(orders);
+
+        for (Long id : ids) {
+            Order order = orderDao.selectOrderById(id);
+            OrderByOtherResponse orderByOtherResponse = new OrderByOtherResponse();
+            orderByOtherResponse.setId(id);
+            orderByOtherResponse.setOrderState(order.getOrderState());
+            orderByOtherResponselist.add(orderByOtherResponse);
+        }
+
+        response.setOrderByOtherResponseList(orderByOtherResponselist);
+        return response;
     }
 
     @Override
